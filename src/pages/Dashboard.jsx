@@ -31,10 +31,13 @@ const Dashboard = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['dashboardMetrics'] });
         },
+        onError: (error) => {
+            setAiMessage(`❌ Gagal menyimpan: ${error.message}`);
+        }
     });
 
     const formatCurrency = (val) => {
-        if (typeof val !== 'number') return 'N/A';
+        if (typeof val !== 'number') return 'Rp 0';
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(val);
     };
 
@@ -52,7 +55,6 @@ const Dashboard = () => {
         if (Object.keys(updates).length > 0) {
             updateMetricsMutation.mutate(updates, {
                 onSuccess: () => setAiMessage('✅ AI successfully updated metrics!'),
-                onError: () => setAiMessage('⚠️ AI failed to update metrics.'),
             });
         } else {
             setAiMessage("⚠️ AI couldn't extract specific data.");
@@ -113,7 +115,7 @@ const Dashboard = () => {
                             {updateMetricsMutation.isPending ? 'Analyzing...' : <><Send size={18} /> Process</>}
                         </button>
                     </div>
-                    {aiMessage && <div className="text-sm" style={{ marginTop: '0.5rem', color: aiMessage.startsWith('✅') ? 'green' : 'orange' }}>{aiMessage}</div>}
+                    {aiMessage && <div className="text-sm" style={{ marginTop: '0.5rem', color: aiMessage.startsWith('✅') ? 'green' : aiMessage.startsWith('❌') ? 'red' : 'orange' }}>{aiMessage}</div>}
                 </div>
 
                 {/* Manual Update Section */}
@@ -128,7 +130,7 @@ const Dashboard = () => {
                                 type="number"
                                 name="gmv"
                                 className="w-full"
-                                placeholder={formatCurrency(metrics.gmv)}
+                                placeholder={formatCurrency(metrics?.gmv)}
                                 value={manualInputs.gmv}
                                 onChange={handleInputChange}
                                 style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', marginTop: '4px' }}
@@ -140,7 +142,7 @@ const Dashboard = () => {
                                 type="number"
                                 name="profit"
                                 className="w-full"
-                                placeholder={formatCurrency(metrics.profit)}
+                                placeholder={formatCurrency(metrics?.profit)}
                                 value={manualInputs.profit}
                                 onChange={handleInputChange}
                                 style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd', marginTop: '4px' }}
@@ -156,12 +158,12 @@ const Dashboard = () => {
 
             {/* Metrics Grid */}
             <div className="grid grid-cols-3 gap-md">
-                <Card title="Gross Merchandise Value" value={formatCurrency(metrics.gmv)} trend={2.5} icon={<DollarSign size={20} />} />
-                <Card title="Net Sales" value={formatCurrency(metrics.netSales)} trend={1.8} />
-                <Card title="Profit" value={formatCurrency(metrics.profit)} trend={5.2} icon={<TrendingUp size={20} />} />
-                <Card title="Items Sold" value={metrics.soldItems} subtext="units today" icon={<Package size={20} />} />
-                <Card title="Avg Discount" value={`${metrics.discountRate}%`} subtext="Target < 20%" />
-                <Card title="Return Rate" value={`${metrics.returnRate}%`} subtext="Target < 2%" />
+                <Card title="Gross Merchandise Value" value={formatCurrency(metrics?.gmv)} trend={2.5} icon={<DollarSign size={20} />} />
+                <Card title="Net Sales" value={formatCurrency(metrics?.netSales)} trend={1.8} />
+                <Card title="Profit" value={formatCurrency(metrics?.profit)} trend={5.2} icon={<TrendingUp size={20} />} />
+                <Card title="Items Sold" value={metrics?.soldItems || 0} subtext="units today" icon={<Package size={20} />} />
+                <Card title="Avg Discount" value={`${metrics?.discountRate || 0}%`} subtext="Target < 20%" />
+                <Card title="Return Rate" value={`${metrics?.returnRate || 0}%`} subtext="Target < 2%" />
             </div>
 
             <div className="grid grid-cols-2 gap-md wrap-mobile-col">
@@ -203,7 +205,7 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {skuData.map((item) => (
+                                {skuData?.map((item) => (
                                     <tr key={item.sku} style={{ borderBottom: '1px solid #f0f0f0' }}>
                                         <td style={{ padding: '0.75rem 0.5rem', fontSize: '0.875rem' }}>{item.sku}</td>
                                         <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500 }}>{item.name}</td>
@@ -228,6 +230,7 @@ const Dashboard = () => {
             </div>
         </div>
     );
+
 };
 
 export default Dashboard;

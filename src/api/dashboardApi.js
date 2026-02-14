@@ -59,6 +59,18 @@ export const updateDashboardMetrics = async (newData) => {
 
 let MOCK_MEETING_DATA = {
     date: new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+    attendance: [
+        { role: 'Div E-Comm', present: false },
+        { role: 'Div HCGA/Fin', present: false },
+        { role: 'Div Live', present: false },
+        { role: 'Div Sales', present: false },
+        { role: 'Div Creative', present: false },
+        { role: 'Div Prod', present: false },
+        { role: 'Div Whs/Log', present: false },
+        { role: 'Notulen', present: false },
+    ],
+    goodNewsBusiness: '',
+    goodNewsPersonal: '',
     ecommTable: [
         { kpi: 'Total Omset (5 Brand)', target: 'Rp 285 Jt', realisasi: '...', status: 'on' },
         { kpi: 'Rata-rata ROAS', target: '> 10x', realisasi: '...', status: 'on' },

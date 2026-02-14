@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Home, Users, ShoppingCart, Banknote, Video, Headset, PenTool, Factory, Warehouse, MountainSnow, Newspaper, ListCheck, MessageSquare, Star, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -25,6 +25,9 @@ const Tools = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['meetingData'] });
         },
+        onError: (error) => {
+            alert(`⚠️ Sinkronisasi gagal: ${error.message}`);
+        }
     });
     
     const navItems = [
@@ -45,24 +48,30 @@ const Tools = () => {
     ];
     
     const handleUpdateKpi = (table, rowIndex, field, value) => {
+        if (!meetingData) return;
         const newData = { ...meetingData };
-        newData[table] = [...newData[table]];
-        newData[table][rowIndex] = { ...newData[table][rowIndex], [field]: value };
-        mutation.mutate(newData);
+        newData[table] = [...(newData[table] || [])];
+        if (newData[table][rowIndex]) {
+            newData[table][rowIndex] = { ...newData[table][rowIndex], [field]: value };
+            mutation.mutate(newData);
+        }
     };
 
     const handleAddKpiRow = (table) => {
+        if (!meetingData) return;
         const newData = { ...meetingData };
-        newData[table] = [...newData[table], { kpi: '...', target: '...', realisasi: '...', status: 'on' }];
+        newData[table] = [...(newData[table] || []), { kpi: '...', target: '...', realisasi: '...', status: 'on' }];
         mutation.mutate(newData);
     };
 
     const handleGenericChange = (field, value) => {
+        if (!meetingData) return;
         const newData = { ...meetingData, [field]: value };
         mutation.mutate(newData);
     };
     
     const handlePullIssues = () => {
+        if (!meetingData) return;
         const issues = [];
         const tablesToScan = [
             'ecommTable', 'hcgaTable', 'liveTable', 'salesTable', 
@@ -79,37 +88,86 @@ const Tools = () => {
             }
         });
 
-        const newData = { ...meetingData, idtIssues: [...meetingData.idtIssues, ...issues] };
+        const newData = { ...meetingData, idtIssues: [...(meetingData.idtIssues || []), ...issues] };
         mutation.mutate(newData);
     };
     
     const handleAddIssue = () => {
-        const newData = { ...meetingData, idtIssues: [...meetingData.idtIssues, 'Isu Baru...'] };
+        if (!meetingData) return;
+        const newData = { ...meetingData, idtIssues: [...(meetingData.idtIssues || []), 'Isu Baru...'] };
         mutation.mutate(newData);
     };
 
     const handleDiscussionChange = (e) => {
+        if (!meetingData) return;
         const newData = { ...meetingData, discussionNotes: e.target.value };
         mutation.mutate(newData);
     };
 
     const handleActionChange = (e) => {
+        if (!meetingData) return;
         const newData = { ...meetingData, actionItems: e.target.value };
         mutation.mutate(newData);
     };
 
     const handleRatingChange = (div, value) => {
+        if (!meetingData) return;
         const val = parseFloat(value) || 0;
         const newData = { 
             ...meetingData, 
-            ratings: { ...meetingData.ratings, [div]: val } 
+            ratings: { ...(meetingData.ratings || {}), [div]: val } 
         };
+        mutation.mutate(newData);
+    };
+
+    const handleAttendanceChange = (index) => {
+        if (!meetingData || !meetingData.attendance) return;
+        const newData = { ...meetingData };
+        newData.attendance = [...newData.attendance];
+        if (newData.attendance[index]) {
+            newData.attendance[index] = { ...newData.attendance[index], present: !newData.attendance[index].present };
+            mutation.mutate(newData);
+        }
+    };
+
+    const handleRockUpdate = (rowIndex, field, value) => {
+        if (!meetingData || !meetingData.rocksTable) return;
+        const newData = { ...meetingData };
+        newData.rocksTable = [...newData.rocksTable];
+        if (newData.rocksTable[rowIndex]) {
+            newData.rocksTable[rowIndex] = { ...newData.rocksTable[rowIndex], [field]: value };
+            mutation.mutate(newData);
+        }
+    };
+
+    const handleAddRockRow = () => {
+        if (!meetingData) return;
+        const newData = { ...meetingData };
+        newData.rocksTable = [...(newData.rocksTable || []), { owner: '...', goal: '...', status: 'on' }];
+        mutation.mutate(newData);
+    };
+
+    const handleTodoUpdate = (rowIndex, field, value) => {
+        if (!meetingData || !meetingData.todoTable) return;
+        const newData = { ...meetingData };
+        newData.todoTable = [...newData.todoTable];
+        if (newData.todoTable[rowIndex]) {
+            newData.todoTable[rowIndex] = { ...newData.todoTable[rowIndex], [field]: value };
+            mutation.mutate(newData);
+        }
+    };
+
+    const handleAddTodoRow = () => {
+        if (!meetingData) return;
+        const newData = { ...meetingData };
+        newData.todoTable = [...(newData.todoTable || []), { task: '...', owner: '...', status: 'not' }];
         mutation.mutate(newData);
     };
 
     const averageRating = useMemo(() => {
         if (!meetingData?.ratings) return 0;
         const vals = Object.values(meetingData.ratings);
+        if (vals.length === 0) return 0;
         const sum = vals.reduce((a, b) => a + b, 0);
         return (sum / vals.length).toFixed(1);
     }, [meetingData?.ratings]);
@@ -126,14 +184,14 @@ const Tools = () => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Rapat-Kinerja-${meetingData.date}.pdf`);
+            pdf.save(`Rapat-Kinerja-${meetingData?.date || 'Download'}.pdf`);
         } catch (error) {
             alert("Gagal mengunduh PDF: " + error.message);
         }
     };
 
     if (isLoading) {
-        return <div>Loading Meeting Dashboard...</div>;
+        return <div className="flex justify-center items-center h-screen">Loading Meeting Dashboard...</div>;
     }
 
     return (
@@ -162,9 +220,15 @@ const Tools = () => {
                         </li>
                     ))}
                 </ul>
-                <button onClick={saveAsPDF} className="btn-action" style={{ marginTop: '20px' }}>
-                    <FileText size={16} /> Download Laporan
-                </button>
+                
+                <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+                    <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '5px', textAlign: 'center' }}>
+                        {mutation.isPending ? '⏳ Menyimpan...' : '✅ Tersinkronisasi'}
+                    </div>
+                    <button onClick={saveAsPDF} className="btn-action" style={{ width: '100%' }}>
+                        <FileText size={16} /> Download Laporan
+                    </button>
+                </div>
             </div>
 
             {/* Main Content */}
@@ -175,16 +239,62 @@ const Tools = () => {
                          <input 
                             className="input-bare" 
                             style={{ fontSize: '24px', textAlign: 'center', fontWeight: 600, color: 'var(--secondary)' }}
-                            value={meetingData.date}
+                            value={meetingData?.date || ''}
                             onChange={(e) => handleGenericChange('date', e.target.value)}
                          />
+                    </div>
+                )}
+
+                {activeSection === 1 && (
+                    <div className="grid-2">
+                        <div className="card">
+                            <h3 style={{ margin: 0, color: 'var(--secondary)' }}>Daftar Hadir</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                                {meetingData?.attendance?.map((person, index) => (
+                                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fafafa', padding: '8px 12px', borderRadius: '6px' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={person.present} 
+                                            onChange={() => handleAttendanceChange(index)}
+                                            style={{ width: '18px', height: '18px' }}
+                                        />
+                                        <span style={{ fontSize: '14px', fontWeight: 500 }}>{person.role}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="card">
+                            <h3 style={{ margin: 0, color: 'var(--secondary)' }}>Kabar Baik (Good News)</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px', height: '100%' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <strong style={{ fontSize: '13px', marginBottom: '5px' }}>Bisnis/Profesional:</strong>
+                                    <textarea 
+                                        className="input-bare" 
+                                        style={{ flexGrow: 1, background: '#fafafa', padding: '8px', borderRadius: '6px' }}
+                                        value={meetingData?.goodNewsBusiness || ''}
+                                        onChange={(e) => handleGenericChange('goodNewsBusiness', e.target.value)}
+                                        placeholder="..."
+                                    />
+                                </div>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <strong style={{ fontSize: '13px', marginBottom: '5px' }}>Personal:</strong>
+                                    <textarea 
+                                        className="input-bare" 
+                                        style={{ flexGrow: 1, background: '#fafafa', padding: '8px', borderRadius: '6px' }}
+                                        value={meetingData?.goodNewsPersonal || ''}
+                                        onChange={(e) => handleGenericChange('goodNewsPersonal', e.target.value)}
+                                        placeholder="..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
                 {activeSection === 2 && (
                     <KpiTable 
                         title="Div. E-Commerce & Retail"
-                        data={meetingData.ecommTable}
+                        data={meetingData?.ecommTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('ecommTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('ecommTable')}
                     />
@@ -192,7 +302,7 @@ const Tools = () => {
                 {activeSection === 3 && (
                      <KpiTable 
                         title="Div. HCGA & Finance"
-                        data={meetingData.hcgaTable}
+                        data={meetingData?.hcgaTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('hcgaTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('hcgaTable')}
                     />
@@ -200,7 +310,7 @@ const Tools = () => {
                 {activeSection === 4 && (
                      <KpiTable 
                         title="Div. Live, KOL, Affiliate"
-                        data={meetingData.liveTable}
+                        data={meetingData?.liveTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('liveTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('liveTable')}
                     />
@@ -208,7 +318,7 @@ const Tools = () => {
                 {activeSection === 5 && (
                      <KpiTable 
                         title="Div. Sales Admin"
-                        data={meetingData.salesTable}
+                        data={meetingData?.salesTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('salesTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('salesTable')}
                     />
@@ -216,7 +326,7 @@ const Tools = () => {
                 {activeSection === 6 && (
                      <KpiTable 
                         title="Div. Creative & Sosmed"
-                        data={meetingData.creativeTable}
+                        data={meetingData?.creativeTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('creativeTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('creativeTable')}
                     />
@@ -224,7 +334,7 @@ const Tools = () => {
                 {activeSection === 7 && (
                      <KpiTable 
                         title="Div. Prod & Purch"
-                        data={meetingData.prodTable}
+                        data={meetingData?.prodTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('prodTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('prodTable')}
                     />
@@ -232,10 +342,96 @@ const Tools = () => {
                 {activeSection === 8 && (
                      <KpiTable 
                         title="Div. Warehouse & Log"
-                        data={meetingData.warehouseTable}
+                        data={meetingData?.warehouseTable || []}
                         onUpdate={(rowIndex, field, value) => handleUpdateKpi('warehouseTable', rowIndex, field, value)}
                         onAddRow={() => handleAddKpiRow('warehouseTable')}
                     />
+                )}
+
+                {activeSection === 9 && (
+                    <div className="card">
+                        <h3 style={{ marginTop: 0, color: 'var(--secondary)' }}>Tinjauan Prioritas Utama (Rocks)</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="20%">Owner</th>
+                                    <th width="60%">Prioritas Utama (Goal)</th>
+                                    <th align="center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {meetingData?.rocksTable?.map((rock, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            <input 
+                                                className="input-bare" 
+                                                value={rock.owner} 
+                                                onChange={(e) => handleRockUpdate(index, 'owner', e.target.value)} 
+                                            />
+                                        </td>
+                                        <td>
+                                            <input 
+                                                className="input-bare" 
+                                                value={rock.goal} 
+                                                onChange={(e) => handleRockUpdate(index, 'goal', e.target.value)} 
+                                            />
+                                        </td>
+                                        <td align="center">
+                                            <div 
+                                                className={`pill ${rock.status}`} 
+                                                onClick={() => handleRockUpdate(index, 'status', rock.status === 'on' ? 'off' : 'on')}
+                                            ></div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button className="btn-add" onClick={handleAddRockRow}>+ Tambah Prioritas</button>
+                    </div>
+                )}
+
+                {activeSection === 11 && (
+                    <div className="card">
+                        <h3 style={{ marginTop: 0, color: 'var(--secondary)' }}>To-Do List (7 Hari)</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="55%">Tugas</th>
+                                    <th width="20%">Owner</th>
+                                    <th align="center">Selesai?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {meetingData?.todoTable?.map((todo, index) => (
+                                    <tr key={index}>
+                                        <td>{index + 1}</td>
+                                        <td>
+                                            <input 
+                                                className="input-bare" 
+                                                value={todo.task} 
+                                                onChange={(e) => handleTodoUpdate(index, 'task', e.target.value)} 
+                                            />
+                                        </td>
+                                        <td>
+                                            <input 
+                                                className="input-bare" 
+                                                value={todo.owner} 
+                                                onChange={(e) => handleTodoUpdate(index, 'owner', e.target.value)} 
+                                            />
+                                        </td>
+                                        <td align="center">
+                                            <div 
+                                                className={`pill ${todo.status === 'done' ? 'done' : 'not'}`} 
+                                                onClick={() => handleTodoUpdate(index, 'status', todo.status === 'done' ? 'not' : 'done')}
+                                            ></div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button className="btn-add" onClick={handleAddTodoRow}>+ Tambah To-Do</button>
+                    </div>
                 )}
 
                 {activeSection === 10 && (
@@ -245,7 +441,7 @@ const Tools = () => {
                             <textarea 
                                 className="input-bare" 
                                 style={{ flexGrow: 1, marginTop: '10px', minHeight: '150px' }}
-                                value={meetingData.customerHeadlines}
+                                value={meetingData?.customerHeadlines || ''}
                                 onChange={(e) => handleGenericChange('customerHeadlines', e.target.value)}
                                 placeholder="Tulis berita penting dari customer..."
                             />
@@ -255,7 +451,7 @@ const Tools = () => {
                             <textarea 
                                 className="input-bare" 
                                 style={{ flexGrow: 1, marginTop: '10px', minHeight: '150px' }}
-                                value={meetingData.internalHeadlines}
+                                value={meetingData?.internalHeadlines || ''}
                                 onChange={(e) => handleGenericChange('internalHeadlines', e.target.value)}
                                 placeholder="Tulis berita penting internal..."
                             />
@@ -265,9 +461,9 @@ const Tools = () => {
 
                 {activeSection === 12 && (
                     <IdtSection 
-                        issues={meetingData.idtIssues}
-                        discussionNotes={meetingData.discussionNotes}
-                        actionItems={meetingData.actionItems}
+                        issues={meetingData?.idtIssues || []}
+                        discussionNotes={meetingData?.discussionNotes || ''}
+                        actionItems={meetingData?.actionItems || ''}
                         onPullIssues={handlePullIssues}
                         onAddIssue={handleAddIssue}
                         onDiscussionChange={handleDiscussionChange}
@@ -278,7 +474,7 @@ const Tools = () => {
                 {activeSection === 13 && (
                     <div className="card" style={{ justifyContent: 'center', alignItems: 'center' }}>
                         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            {meetingData.ratings && Object.keys(meetingData.ratings).map((div) => (
+                            {meetingData?.ratings && Object.keys(meetingData.ratings).map((div) => (
                                 <div key={div} style={{ textAlign: 'center' }}>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--secondary)', textTransform: 'capitalize' }}>{div}</label>
                                     <input 
@@ -299,9 +495,9 @@ const Tools = () => {
                     </div>
                 )}
                 
-                {activeSection !== 0 && activeSection !== 2 && activeSection !== 3 && activeSection !== 4 && activeSection !== 5 && activeSection !== 6 && activeSection !== 7 && activeSection !== 8 && activeSection !== 10 && activeSection !== 12 && activeSection !== 13 && (
+                {activeSection !== 0 && activeSection !== 1 && activeSection !== 2 && activeSection !== 3 && activeSection !== 4 && activeSection !== 5 && activeSection !== 6 && activeSection !== 7 && activeSection !== 8 && activeSection !== 9 && activeSection !== 10 && activeSection !== 11 && activeSection !== 12 && activeSection !== 13 && (
                     <div className="card">
-                        <h1 className="page-title">{navItems[activeSection].label}</h1>
+                        <h1 className="page-title">{navItems[activeSection]?.label}</h1>
                         <p>Bagian ini siap untuk diisi data spesifik.</p>
                     </div>
                 )}
@@ -311,4 +507,3 @@ const Tools = () => {
 };
 
 export default Tools;
-
