@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Tools = lazy(() => import('./pages/Tools'));
+const MeetingTool = lazy(() => import('./pages/MeetingTool'));
+const GrowthSimulator = lazy(() => import('./pages/GrowthSimulator'));
 
 function App() {
   return (
@@ -12,7 +13,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
-            <Route path="tools" element={<Tools />} />
+            <Route path="meeting" element={<MeetingTool />} />
+            <Route path="simulator" element={<GrowthSimulator />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

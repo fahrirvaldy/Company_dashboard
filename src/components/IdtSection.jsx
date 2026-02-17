@@ -1,9 +1,10 @@
 import React from 'react';
 import { Magnet } from 'lucide-react';
 
-const IdtSection = ({ issues, discussionNotes, actionItems, onPullIssues, onAddIssue, onDiscussionChange, onActionChange }) => {
+const IdtSection = ({ issues, discussionNotes, actionItems, onPullIssues, onAddIssue, onRemoveIssue, onDiscussionChange, onActionChange }) => {
     return (
         <div className="performance-meeting-tool">
+            {/* ... header bar remains same ... */}
             <div className="header-bar">
                 <div>
                     <h1 className="page-title">Sesi IDT</h1>
@@ -32,9 +33,16 @@ const IdtSection = ({ issues, discussionNotes, actionItems, onPullIssues, onAddI
                     <div className="ids-header">1. Identifikasi (Daftar)</div>
                     <div style={{ flexGrow: 1, overflowY: 'auto' }}>
                         {issues.map((issue, index) => (
-                            <div key={index} className="ids-item">
+                            <div key={index} className="ids-item group">
                                 <input type="checkbox" style={{ marginTop: '4px' }} />
-                                <span style={{ fontSize: '13px', lineHeight: '1.4' }}>{issue}</span>
+                                <span style={{ fontSize: '13px', lineHeight: '1.4', flexGrow: 1 }}>{issue}</span>
+                                <button 
+                                    onClick={() => onRemoveIssue(index)}
+                                    style={{ border: 'none', background: 'transparent', color: '#ccc', cursor: 'pointer', fontSize: '10px' }}
+                                    className="hover:text-red-500"
+                                >
+                                    ✕
+                                </button>
                             </div>
                         ))}
                     </div>

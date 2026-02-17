@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Wrench, Settings } from 'lucide-react';
+import { LayoutDashboard, Wrench, Settings, TrendingUp, CalendarCheck } from 'lucide-react';
 import './Layout.css';
 
 const Layout = () => {
     const navItems = [
         { to: "/", icon: <LayoutDashboard size={24} />, label: "Dashboard" },
-        { to: "/tools", icon: <Wrench size={24} />, label: "Tools" },
+        { to: "/meeting", icon: <CalendarCheck size={24} />, label: "Meeting Tool" },
+        { to: "/simulator", icon: <TrendingUp size={24} />, label: "Growth Simulator" },
     ];
 
     return (

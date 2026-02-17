@@ -1,20 +1,20 @@
 :root {
-    /* Palette Coklat Susu (Latte Theme) */
-    --sidebar-bg: #4E342E;     /* Dark Coffee */
-    --sidebar-text: #EFEBE9;   /* Milk Foam */
-    --sidebar-active: #6D4C41; /* Lighter Coffee */
+    /* Harmonized Theme */
+    --sidebar-bg: #2D3748;     /* Darker Grey for contrast */
+    --sidebar-text: #FDFBF7;   /* Warm Cream text */
+    --sidebar-active: #FF8c42; /* Soft Orange (Primary) */
     
-    --main-bg: #F5F1EE;        /* Cream Background */
+    --main-bg: #FDFBF7;        /* Warm Cream Background */
     --card-bg: #FFFFFF;        /* White Card */
     
-    --primary: #4E342E;        /* Text Primary */
-    --secondary: #8D6E63;      /* Text Secondary / Accent */
-    --border: #D7CCC8;         /* Soft Border */
+    --primary: #2D3748;        /* Text Primary */
+    --secondary: #718096;      /* Text Secondary / Accent */
+    --border: #E2E8F0;         /* Soft Border */
     
-    /* Status Colors (Pastel/Soft) */
-    --success-bg: #E8F5E9; --success-text: #2E7D32;
-    --danger-bg: #FFEBEE;  --danger-text: #C62828;
-    --warning-bg: #FFF8E1; --warning-text: #FF8F00;
+    /* Status Colors */
+    --success-bg: #C6F6D5; --success-text: #276749;
+    --danger-bg: #FED7D7;  --danger-text: #9B2C2C;
+    --warning-bg: #FEEBC8; --warning-text: #9C4221;
 }
 
 .performance-meeting-tool * { box-sizing: border-box; outline: none; }

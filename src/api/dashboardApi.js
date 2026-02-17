@@ -1,4 +1,18 @@
-let MOCK_METRICS = {
+// Helper for LocalStorage Persistence
+const STORAGE_KEY_PREFIX = 'Angkasa_Dashboard_';
+
+const getStoredData = (key, defaultValue) => {
+    const saved = localStorage.getItem(STORAGE_KEY_PREFIX + key);
+    if (saved) return JSON.parse(saved);
+    return defaultValue;
+};
+
+const setStoredData = (key, data) => {
+    localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(data));
+};
+
+// Initial MOCK Data
+const DEFAULT_METRICS = {
     gmv: 165000000,
     netSales: 135000000,
     profit: 55000000,
@@ -7,67 +21,17 @@ let MOCK_METRICS = {
     returnRate: 3,
 };
 
-const MOCK_CHART_DATA = [
-    { name: 'Mon', sales: 4200 },
-    { name: 'Tue', sales: 3100 },
-    { name: 'Wed', sales: 2300 },
-    { name: 'Thu', sales: 2980 },
-    { name: 'Fri', sales: 2190 },
-    { name: 'Sat', sales: 2590 },
-    { name: 'Sun', sales: 3890 },
-];
-
-const MOCK_SKU_DATA = [
-    { sku: 'SKU-001', name: 'Premium Coffee Beans', stock: 120, status: 'Good' },
-    { sku: 'SKU-002', name: 'Ceramic Mug Set', stock: 15, status: 'Low' },
-    { sku: 'SKU-003', name: 'Coffee Grinder', stock: 5, status: 'Critical' },
-    { sku: 'SKU-004', name: 'Filter Paper', stock: 500, status: 'Good' },
-];
-
-// Simulate API delay
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const fetchDashboardMetrics = async () => {
-    await sleep(800);
-    // Simulate a potential error
-    if (Math.random() > 0.95) {
-        throw new Error("Failed to fetch dashboard metrics.");
-    }
-    return MOCK_METRICS;
-};
-
-export const fetchSalesChartData = async () => {
-    await sleep(1200);
-    return MOCK_CHART_DATA;
-};
-
-export const fetchSkuData = async () => {
-    await sleep(500);
-    return MOCK_SKU_DATA;
-};
-
-export const updateDashboardMetrics = async (newData) => {
-    await sleep(500);
-    if (Math.random() > 0.98) {
-        throw new Error("Failed to save metrics.");
-    }
-    MOCK_METRICS = { ...MOCK_METRICS, ...newData };
-    return MOCK_METRICS;
-};
-
-// --- MEETING TOOLS API ---
-
-let MOCK_MEETING_DATA = {
+const DEFAULT_MEETING_DATA = {
     date: new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
     attendance: [
-        { role: 'Div E-Comm', present: false },
-        { role: 'Div HCGA/Fin', present: false },
-        { role: 'Div Live', present: false },
-        { role: 'Div Sales', present: false },
-        { role: 'Div Creative', present: false },
-        { role: 'Div Prod', present: false },
-        { role: 'Div Whs/Log', present: false },
-        { role: 'Notulen', present: false },
+        { role: 'Div E-Comm', present: true },
+        { role: 'Div HCGA/Fin', present: true },
+        { role: 'Div Live', present: true },
+        { role: 'Div Sales', present: true },
+        { role: 'Div Creative', present: true },
+        { role: 'Div Prod', present: true },
+        { role: 'Div Whs/Log', present: true },
+        { role: 'Notulen', present: true },
     ],
     goodNewsBusiness: '',
     goodNewsPersonal: '',
@@ -121,13 +85,104 @@ let MOCK_MEETING_DATA = {
     }
 };
 
+const DEFAULT_GROWTH_DATA = {
+    current: {
+        leads: 1000,
+        conv: 10,
+        trans: 2,
+        sale: 100000,
+        margin: 25,
+    },
+    target: {
+        leads: 1100,
+        conv: 11,
+        trans: 2.2,
+        sale: 110000,
+        margin: 27.5,
+    },
+    metrics: {
+        marketing: 5000000,
+        fixedCost: 15000000,
+    }
+};
+
+const MOCK_CHART_DATA = [
+    { name: 'Mon', sales: 120000000 },
+    { name: 'Tue', sales: 110000000 },
+    { name: 'Wed', sales: 135000000 },
+    { name: 'Thu', sales: 125000000 },
+    { name: 'Fri', sales: 140000000 },
+    { name: 'Sat', sales: 155000000 },
+    { name: 'Sun', sales: 135000000 },
+];
+
+const MOCK_SKU_DATA = [
+    { sku: 'SKU-001', name: 'Premium Coffee Beans', stock: 120, status: 'Good' },
+    { sku: 'SKU-002', name: 'Ceramic Mug Set', stock: 15, status: 'Low' },
+    { sku: 'SKU-003', name: 'Coffee Grinder', stock: 5, status: 'Critical' },
+    { sku: 'SKU-004', name: 'Filter Paper', stock: 500, status: 'Good' },
+];
+
+// Simulate API delay
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const fetchDashboardMetrics = async () => {
+    await sleep(400);
+    return getStoredData('metrics', DEFAULT_METRICS);
+};
+
+export const fetchSalesChartData = async () => {
+    await sleep(500);
+    return getStoredData('chartData', MOCK_CHART_DATA);
+};
+
+export const fetchSkuData = async () => {
+    await sleep(300);
+    return getStoredData('skuData', MOCK_SKU_DATA);
+};
+
+export const updateDashboardMetrics = async (newData) => {
+    await sleep(300);
+    const current = getStoredData('metrics', DEFAULT_METRICS);
+    const merged = { ...current, ...newData };
+    setStoredData('metrics', merged);
+    
+    // Update chart data if netSales changed (simulating real-time update)
+    if (newData.netSales) {
+        const chart = getStoredData('chartData', MOCK_CHART_DATA);
+        // Update the last day's value
+        chart[chart.length - 1].sales = newData.netSales;
+        setStoredData('chartData', chart);
+    }
+    
+    return merged;
+};
+
 export const fetchMeetingData = async () => {
-    await sleep(600);
-    return MOCK_MEETING_DATA;
+    await sleep(400);
+    return getStoredData('meeting', DEFAULT_MEETING_DATA);
 };
 
 export const saveMeetingData = async (data) => {
-    await sleep(800);
-    MOCK_MEETING_DATA = { ...data };
-    return MOCK_MEETING_DATA;
+    await sleep(400);
+    setStoredData('meeting', data);
+    return data;
+};
+
+export const fetchGrowthData = async () => {
+    await sleep(400);
+    return getStoredData('growth', DEFAULT_GROWTH_DATA);
+};
+
+export const saveGrowthData = async (data) => {
+    await sleep(400);
+    setStoredData('growth', data);
+    
+    // Auto-sync dashboard profit
+    const currentProfit = (data.current.leads * (data.current.conv / 100)) * data.current.trans * data.current.sale * (data.current.margin / 100);
+    const metrics = getStoredData('metrics', DEFAULT_METRICS);
+    metrics.profit = currentProfit;
+    setStoredData('metrics', metrics);
+    
+    return data;
 };
