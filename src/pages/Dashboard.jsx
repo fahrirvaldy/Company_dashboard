@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { TrendingUp, Package, DollarSign, AlertCircle, Send, Edit, Target, ListChecks, Save } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, Send, Edit, Target, ListChecks, Zap, AlertTriangle } from 'lucide-react';
 import Card from '../components/Card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchDashboardMetrics, fetchSalesChartData, fetchSkuData, updateDashboardMetrics, fetchMeetingData, fetchGrowthData, saveMeetingData } from '../api/dashboardApi';
+import { fetchDashboardMetrics, fetchSalesChartData, fetchSkuData, updateDashboardMetrics, fetchMeetingData, fetchGrowthData, resetSystem } from '../api/dashboardApi';
 
 const Dashboard = () => {
     const queryClient = useQueryClient();
@@ -11,314 +11,259 @@ const Dashboard = () => {
     const [aiMessage, setAiMessage] = useState('');
     const [manualInputs, setManualInputs] = useState({ gmv: '', profit: '', netSales: '', soldItems: '', discountRate: '', returnRate: '' });
 
-    // Queries
-    const { data: metrics, isLoading: isLoadingMetrics } = useQuery({
-        queryKey: ['dashboardMetrics'],
-        queryFn: fetchDashboardMetrics,
-    });
+    const { data: metrics, isLoading: isLoadingMetrics } = useQuery({ queryKey: ['dashboardMetrics'], queryFn: fetchDashboardMetrics });
+    const { data: chartData, isLoading: isLoadingChart } = useQuery({ queryKey: ['salesChartData'], queryFn: fetchSalesChartData });
+    const { data: skuData, isLoading: isLoadingSku } = useQuery({ queryKey: ['skuData'], queryFn: fetchSkuData });
+    const { data: meetingData } = useQuery({ queryKey: ['meetingData'], queryFn: fetchMeetingData });
+    const { data: growthData } = useQuery({ queryKey: ['growthData'], queryFn: fetchGrowthData });
 
-    const { data: chartData, isLoading: isLoadingChart } = useQuery({
-        queryKey: ['salesChartData'],
-        queryFn: fetchSalesChartData,
-    });
-
-    const { data: skuData, isLoading: isLoadingSku } = useQuery({
-        queryKey: ['skuData'],
-        queryFn: fetchSkuData,
-    });
-
-    const { data: meetingData, isLoading: isLoadingMeeting } = useQuery({
-        queryKey: ['meetingData'],
-        queryFn: fetchMeetingData,
-    });
-
-    const { data: growthData, isLoading: isLoadingGrowth } = useQuery({
-        queryKey: ['growthData'],
-        queryFn: fetchGrowthData,
-    });
-
-    // Mutations
     const updateMetricsMutation = useMutation({
         mutationFn: updateDashboardMetrics,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['dashboardMetrics'] });
             queryClient.invalidateQueries({ queryKey: ['salesChartData'] });
-        },
-        onError: (error) => {
-            setAiMessage(`❌ Gagal menyimpan: ${error.message}`);
         }
     });
 
-    const mutationMeeting = useMutation({
-        mutationFn: saveMeetingData,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['meetingData'] });
-        }
-    });
-
-    // Handlers
     const formatCurrency = (val) => {
-        if (typeof val !== 'number') return 'Rp 0';
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
-    };
-
-    const calculateProfit = (data) => {
-        if (!data) return 0;
-        const cust = Math.floor(data.leads * (data.conv / 100));
-        return cust * data.trans * data.sale * (data.margin / 100);
-    };
-
-    const currentSimProfit = calculateProfit(growthData?.current);
-    const targetSimProfit = calculateProfit(growthData?.target);
-    const growthPercent = currentSimProfit > 0 ? ((targetSimProfit - currentSimProfit) / currentSimProfit) * 100 : 0;
-
-    const handleAiReport = () => {
-        if (!reportText) return;
-        setAiMessage('');
-
-        let metricsUpdates = {};
-        let meetingUpdates = { ...meetingData };
-        let foundSomething = false;
-
-        const salesMatch = reportText.match(/(?:sales|penjualan)\s+(?:rp\.?)?\s*(\d+)/i);
-        if (salesMatch) {
-            metricsUpdates.netSales = parseInt(salesMatch[1]);
-            foundSomething = true;
-        }
-
-        const profitMatch = reportText.match(/(?:profit|laba|untung)\s+(?:rp\.?)?\s*(\d+)/i);
-        if (profitMatch) {
-            metricsUpdates.profit = parseInt(profitMatch[1]);
-            foundSomething = true;
-        }
-
-        const rockMatch = reportText.match(/(?:prioritas|rock|goal):\s*([^,.]+)/i);
-        if (rockMatch) {
-            meetingUpdates.rocksTable = [...(meetingUpdates.rocksTable || []), { owner: 'AI', goal: rockMatch[1].trim(), status: 'on' }];
-            foundSomething = true;
-        }
-
-        const todoMatch = reportText.match(/(?:tugas|todo|task):\s*([^,.]+)/i);
-        if (todoMatch) {
-            meetingUpdates.todoTable = [...(meetingUpdates.todoTable || []), { task: todoMatch[1].trim(), owner: 'AI', status: 'not' }];
-            foundSomething = true;
-        }
-        
-        if (foundSomething) {
-            if (Object.keys(metricsUpdates).length > 0) {
-                updateMetricsMutation.mutate(metricsUpdates);
-            }
-            if (rockMatch || todoMatch) {
-                mutationMeeting.mutate(meetingUpdates);
-            }
-            setAiMessage('✅ AI integrated report data!');
-            setReportText('');
-        } else {
-            setAiMessage("⚠️ No data found. Try: 'Sales 10jt, Prioritas: Rebranding'");
-        }
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
     };
 
     const handleManualUpdate = () => {
         const newMetrics = {};
         Object.keys(manualInputs).forEach(key => {
-            if (manualInputs[key] !== '') {
-                newMetrics[key] = parseFloat(manualInputs[key]);
-            }
+            if (manualInputs[key] !== '') newMetrics[key] = parseFloat(manualInputs[key]);
         });
-
         if (Object.keys(newMetrics).length > 0) {
             updateMetricsMutation.mutate(newMetrics, {
                 onSuccess: () => setManualInputs({ gmv: '', profit: '', netSales: '', soldItems: '', discountRate: '', returnRate: '' }),
             });
         }
     };
-    
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setManualInputs(prev => ({ ...prev, [name]: value }));
+
+    const handleAiReport = () => {
+        if (!reportText) return;
+        setAiMessage('');
+        let updates = {};
+        const salesMatch = reportText.match(/(?:sales|penjualan)\s*[:=]?\s*(\d+(?:[.,]\d+)?)\s*(jt|juta)?/i);
+        if (salesMatch) {
+            let val = parseFloat(salesMatch[1].replace(',', '.'));
+            if (salesMatch[2]) val *= 1000000;
+            updates.netSales = val;
+        }
+        if (Object.keys(updates).length > 0) {
+            updateMetricsMutation.mutate(updates, {
+                onSuccess: () => {
+                    setAiMessage('✅ Ecosystem Synced via AI');
+                    setReportText('');
+                    setTimeout(() => setAiMessage(''), 3000);
+                },
+            });
+        }
     };
 
-    if (isLoadingMetrics || isLoadingChart || isLoadingSku || isLoadingMeeting || isLoadingGrowth) {
-        return <div className="flex justify-center items-center h-full text-[#FF8c42] font-bold">Loading dashboard integration...</div>;
-    }
+    if (isLoadingMetrics || isLoadingChart || isLoadingSku) return <div className="p-12 text-center animate-pulse"><p className="label-caps">Initializing ecosystem...</p></div>;
 
     return (
-        <div className="flex flex-col gap-6 pb-12">
-            <header className="flex justify-between items-center mb-2">
-                <h2 className="text-2xl font-extrabold text-slate-800">Company Overview</h2>
-                <div className="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
-                    {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <div className="flex flex-col gap-8 animate-in mt-12 lg:mt-20 px-6 lg:px-0">
+            {/* Header Section */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
+                        <span className="label-caps text-orange-500">Live Enterprise Overview</span>
+                    </div>
+                    <h2 className="heading-lg tracking-tighter">Executive Dashboard</h2>
+                    <p className="text-body-muted mt-1 opacity-70">Aggregated performance intelligence across Angkasa ecosystem</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white p-3 rounded-[24px] border border-slate-100 shadow-soft">
+                    <div className="px-6 py-1">
+                        <p className="label-caps mb-1">Fiscal Date</p>
+                        <p className="text-sm font-black text-slate-800 tabular-nums">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <button onClick={resetSystem} className="w-12 h-12 flex items-center justify-center bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-sm">
+                        <AlertTriangle size={20} />
+                    </button>
                 </div>
             </header>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="card" style={{ borderLeft: '4px solid #10B981' }}>
-                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-emerald-700">
-                        <Target size={18} /> Growth Simulator Context
-                    </h3>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Current Profit</p>
-                            <p className="text-xl font-extrabold text-slate-700">{formatCurrency(currentSimProfit)}</p>
+
+            {/* Ecosystem Impact Row - Balanced Proportions */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+                <div className="lg:col-span-7 bg-slate-900 rounded-[32px] p-6 lg:p-8 text-white relative overflow-hidden group shadow-float border border-white/5 flex flex-col justify-center min-h-[240px]">
+                    <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-110 group-hover:rotate-12 transition-transform duration-1000">
+                        <Target size={180} />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/30">
+                                <TrendingUp size={16} className="text-emerald-400" />
+                            </div>
+                            <span className="label-caps text-emerald-400 tracking-[0.4em]">Strategic Logic</span>
                         </div>
-                        <div className="text-center px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100">
-                            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Potential</p>
-                            <p className="text-2xl font-black text-emerald-600">+{growthPercent.toFixed(1)}%</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Target Profit</p>
-                            <p className="text-xl font-extrabold text-emerald-600">{formatCurrency(targetSimProfit)}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-center">
+                            <div>
+                                <p className="label-caps text-slate-500 mb-2">Growth Delta</p>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl lg:text-[56px] font-black tracking-tighter tabular-nums text-white leading-none">
+                                        +{(((growthData?.target.leads || 0) / (growthData?.current.leads || 1) - 1) * 100).toFixed(1)}
+                                    </span>
+                                    <span className="text-xl lg:text-2xl font-black text-emerald-400 tracking-tighter">%</span>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="bg-white/5 p-5 rounded-[24px] border border-white/10 backdrop-blur-xl shadow-2xl">
+                                    <p className="label-caps text-slate-400 mb-1.5">Target Yield</p>
+                                    <p className="text-xl lg:text-2xl font-black text-[#FF8c42] tracking-tight tabular-nums truncate leading-none">
+                                        {formatCurrency(Math.round(Math.floor((growthData?.target.leads || 0) * ((growthData?.target.conv || 0) / 100)) * (growthData?.target.trans || 0) * (growthData?.target.sale || 0) * ((growthData?.target.margin || 0) / 100)))}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="card" style={{ borderLeft: '4px solid #FF8c42' }}>
-                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-orange-600">
-                        <ListChecks size={18} /> Active Business Rocks
-                    </h3>
-                    <div className="grid grid-cols-1 gap-2">
-                        {meetingData?.rocksTable?.slice(0, 2).map((rock, i) => (
-                            <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                <span className="text-sm font-bold text-slate-600">{rock.goal}</span>
-                                <span className={`pill ${rock.status}`}></span>
+                <div className="lg:col-span-5 card-premium flex flex-col justify-between rounded-[32px] p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="label-caps text-orange-500 flex items-center gap-3">
+                            <ListChecks size={16} className="text-slate-900" /> Key Rocks
+                        </h3>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">
+                            <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                            <span className="text-[7.5px] font-black text-emerald-600 uppercase tracking-widest">Live</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2.5">
+                        {meetingData?.rocksTable?.slice(0, 3).map((rock, i) => (
+                            <div key={i} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[18px] hover:bg-white hover:shadow-soft border border-transparent hover:border-slate-100 transition-all duration-500 group">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-2 h-2 rounded-full shadow-lg ${rock.status === 'on' ? 'bg-emerald-400 shadow-emerald-200' : 'bg-rose-400 shadow-rose-200'}`} />
+                                    <span className="text-[10px] font-black text-slate-700 tracking-tight leading-tight uppercase">{rock.goal}</span>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="card" style={{ background: 'linear-gradient(135deg, #fff 0%, #FFF8F0 100%)', border: '1px solid #FFE4C4' }}>
-                    <h3 className="text-sm font-bold flex items-center gap-2 mb-2 text-[#FF8c42]">
-                        <span className="text-lg">✨</span> AI Smart Reporter
-                    </h3>
-                    <p className="text-[11px] text-slate-500 mb-4 leading-relaxed font-medium">
-                        Analyze natural reports to update metrics & tasks.<br/>
-                        <span className="text-orange-400 italic">"Penjualan 150jt, Prioritas: Launch Web"</span>
-                    </p>
-                    <textarea
-                        className="w-full text-sm font-medium p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-300 outline-none transition-all min-h-[80px] mb-3"
-                        placeholder="Paste report text here..."
-                        value={reportText}
-                        onChange={(e) => setReportText(e.target.value)}
-                    />
-                    <button className="btn w-full flex items-center justify-center gap-2 py-3 shadow-lg shadow-orange-100" onClick={handleAiReport} disabled={updateMetricsMutation.isPending || mutationMeeting.isPending}>
-                        <Send size={16} /> Process Report
-                    </button>
-                    {aiMessage && <div className="text-[11px] font-bold mt-3 p-2 rounded bg-white/50 text-center border border-dashed border-orange-200 text-orange-600">{aiMessage}</div>}
-                </div>
-
-                <div className="lg:col-span-2 card">
-                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-slate-700">
-                        <Edit size={16} className="text-orange-400" /> Manual Override
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">GMV (Rp)</label>
-                            <input type="number" name="gmv" className="w-full p-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg focus:border-orange-400 outline-none" placeholder={metrics?.gmv} value={manualInputs.gmv} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Net Sales (Rp)</label>
-                            <input type="number" name="netSales" className="w-full p-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg focus:border-orange-400 outline-none" placeholder={metrics?.netSales} value={manualInputs.netSales} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Profit (Rp)</label>
-                            <input type="number" name="profit" className="w-full p-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg focus:border-orange-400 outline-none" placeholder={metrics?.profit} value={manualInputs.profit} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Items Sold</label>
-                            <input type="number" name="soldItems" className="w-full p-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg focus:border-orange-400 outline-none" placeholder={metrics?.soldItems} value={manualInputs.soldItems} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Discount %</label>
-                            <input type="number" name="discountRate" className="w-full p-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg focus:border-orange-400 outline-none" placeholder={metrics?.discountRate} value={manualInputs.discountRate} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Return Rate %</label>
-                            <input type="number" name="returnRate" className="w-full p-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg focus:border-orange-400 outline-none" placeholder={metrics?.returnRate} value={manualInputs.returnRate} onChange={handleInputChange} />
-                        </div>
-                    </div>
-                    <div className="flex gap-3 mt-6">
-                        <button onClick={handleManualUpdate} disabled={updateMetricsMutation.isPending} className="btn flex-1 shadow-md bg-[#2D3748] hover:bg-slate-700">
-                            Apply Changes
-                        </button>
-                        <button 
-                            onClick={() => {
-                                if (window.confirm('⚠️ Reset all data?')) {
-                                    localStorage.clear();
-                                    window.location.reload();
-                                }
-                            }}
-                            className="px-4 py-2 text-[11px] font-bold text-rose-500 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors"
-                        >
-                            Reset System
-                        </button>
-                    </div>
-                </div>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                <Card title="Gross Merchandise Value" value={formatCurrency(metrics?.gmv)} trend={2.5} icon={<DollarSign size={20} />} />
+                <Card title="Net Ecosystem Sales" value={formatCurrency(metrics?.netSales)} trend={1.8} />
+                <Card title="Realized Net Profit" value={formatCurrency(metrics?.profit)} trend={5.2} icon={<TrendingUp size={20} />} />
+                <Card title="Inventory Distribution" value={metrics?.soldItems?.toLocaleString()} subtext="Units Sold" icon={<Package size={20} />} />
+                <Card title="Average Market Discount" value={`${metrics?.discountRate}%`} subtext="Pricing Efficiency" />
+                <Card title="Operational Return Rate" value={`${metrics?.returnRate}%`} subtext="Customer Satisfaction" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card title="GMV" value={formatCurrency(metrics?.gmv)} trend={2.5} icon={<DollarSign size={20} />} />
-                <Card title="Net Sales" value={formatCurrency(metrics?.netSales)} trend={1.8} />
-                <Card title="Profit" value={formatCurrency(metrics?.profit)} trend={5.2} icon={<TrendingUp size={20} />} />
-                <Card title="Items Sold" value={metrics?.soldItems || 0} subtext="units sold" icon={<Package size={20} />} />
-                <Card title="Avg Discount" value={`${metrics?.discountRate || 0}%`} subtext="Target < 20%" />
-                <Card title="Return Rate" value={`${metrics?.returnRate || 0}%`} subtext="Target < 2%" />
-            </div>
+            {/* Main Interactive Grid - High Fidelity Scaling & Balanced Ratios */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+                <div className="lg:col-span-4 flex flex-col gap-6 lg:gap-8">
+                    {/* AI Smart Reporter */}
+                    <div className="card-premium bg-gradient-to-br from-white to-orange-50/30 rounded-[36px] flex-1 p-6 lg:p-8">
+                        <h3 className="heading-md mb-5 flex items-center gap-3">
+                            <span className="text-xl">✨</span> AI Smart Sync
+                        </h3>
+                        <textarea
+                            className="input-premium min-h-[130px] resize-none mb-5 text-sm"
+                            placeholder="Input performance report summary..."
+                            value={reportText}
+                            onChange={(e) => setReportText(e.target.value)}
+                        />
+                        <button className="btn-premium btn-primary w-full shadow-2xl py-3.5" onClick={handleAiReport}>
+                            <Send size={14} /> Execute Sync
+                        </button>
+                        {aiMessage && <div className="mt-4 p-3 rounded-[16px] bg-white border border-dashed border-emerald-200 text-center label-caps text-emerald-600 animate-in">{aiMessage}</div>}
+                    </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="card">
-                    <h3 className="text-sm font-bold text-slate-500 mb-4">Sales Trend (Weekly)</h3>
-                    <div className="h-[300px] w-full">
+                    {/* Quick SKU View - Proportional High Fidelity Scaling */}
+                    <div className="card-premium rounded-[36px] shrink-0 p-8 lg:p-10">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="label-caps">Stock Integrity Monitor</h3>
+                            <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-3 py-1 rounded-lg tracking-widest">LIVE</span>
+                        </div>
+                        <div className="space-y-8">
+                            {skuData?.slice(0, 4).map((item) => (
+                                <div key={item.sku} className="flex items-start justify-between group cursor-default border-b border-slate-50 pb-6 last:border-none last:pb-0 gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="label-caps text-[8.5px] mb-2 group-hover:text-orange-500 transition-colors tracking-[0.4em]">{item.sku}</p>
+                                        <p className="text-base font-black text-slate-800 tracking-tight uppercase leading-snug whitespace-normal break-words">{item.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-6 shrink-0 pt-1">
+                                        <span className="text-2xl font-black text-slate-900 tabular-nums tracking-tighter leading-none">{item.stock}</span>
+                                        <div className={`w-2 h-2 rounded-full shadow-lg ${item.status === 'Critical' ? 'bg-rose-500 shadow-rose-200' : item.status === 'Low' ? 'bg-amber-400 shadow-amber-200' : 'bg-emerald-400 shadow-emerald-200'}`} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sales Velocity Chart - Hero Proportions */}
+                <div className="lg:col-span-8 card-premium flex flex-col min-h-[420px] rounded-[32px] p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="label-caps text-[8px]">Enterprise Ecosystem Sales Velocity (Weekly Aggregate)</h3>
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-xl shadow-orange-900/20"></div>
+                                <span className="label-caps opacity-60">Gross Ecosystem Sales</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#FF8c42" stopOpacity={0.1} />
+                                        <stop offset="5%" stopColor="#FF8c42" stopOpacity={0.3} />
                                         <stop offset="95%" stopColor="#FF8c42" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8', textTransform: 'uppercase'}} dy={10} />
                                 <YAxis hide />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="sales" stroke="#FF8c42" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                                <Tooltip 
+                                    contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 30px 50px -12px rgba(0,0,0,0.15)', padding: '20px'}}
+                                    itemStyle={{fontWeight: 900, color: '#0F172A', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.1em'}}
+                                />
+                                <Area type="monotone" dataKey="sales" stroke="#FF8c42" strokeWidth={5} fillOpacity={1} fill="url(#colorSales)" dot={{r: 6, fill: '#fff', stroke: '#FF8c42', strokeWidth: 4}} activeDot={{r: 10, strokeWidth: 0, shadowBlur: 20, shadowColor: 'rgba(255,140,66,0.5)'}} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
+            </div>
 
-                <div className="card">
-                    <h3 className="text-sm font-bold text-slate-500 mb-4">Inventory Status</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100">
-                                <tr>
-                                    <th className="pb-2">SKU</th>
-                                    <th className="pb-2">Item</th>
-                                    <th className="pb-2">Stock</th>
-                                    <th className="pb-2">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {skuData?.map((item) => (
-                                    <tr key={item.sku}>
-                                        <td className="py-3 text-slate-500 font-mono">{item.sku}</td>
-                                        <td className="py-3 font-bold text-slate-700">{item.name}</td>
-                                        <td className="py-3 font-bold">{item.stock}</td>
-                                        <td className="py-3">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                                item.status === 'Critical' ? 'bg-rose-100 text-rose-700' : 
-                                                item.status === 'Low' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                                            }`}>
-                                                {item.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            {/* Manual Override - High Fidelity High Contrast Scaling */}
+            <div className="card-premium bg-slate-50/50 border-dashed border-slate-200 rounded-[48px] p-12 lg:p-16">
+                <div className="flex items-center gap-5 mb-12">
+                    <div className="w-14 h-14 bg-white rounded-3xl flex items-center justify-center shadow-soft border border-slate-100">
+                        <Edit size={24} className="text-orange-500" />
                     </div>
+                    <div>
+                        <h3 className="heading-lg tracking-tighter uppercase leading-none text-slate-900">Manual Intelligence Override</h3>
+                        <p className="text-body-muted mt-2 uppercase tracking-widest opacity-60">Direct ecosystem state modification</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-10">
+                    {Object.keys(manualInputs).map((key) => (
+                        <div key={key} className="space-y-4">
+                            <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] block ml-2">
+                                {key.replace(/([A-Z])/g, ' $1')}
+                            </label>
+                            <input 
+                                type="number" 
+                                name={key} 
+                                className="w-full px-8 py-8 lg:py-10 bg-white border border-slate-100 rounded-[32px] text-xl font-black text-slate-800 tabular-nums shadow-soft focus:ring-[16px] focus:ring-orange-50 focus:border-orange-400 outline-none transition-all placeholder:text-slate-200 min-h-[80px]" 
+                                placeholder={metrics?.[key]?.toString() || '0'} 
+                                value={manualInputs[key]} 
+                                onChange={(e) => setManualInputs(p => ({...p, [e.target.name]: e.target.value}))} 
+                            />
+                        </div>
+                    ))}
+                </div>
+                <div className="flex justify-end mt-16">
+                    <button onClick={handleManualUpdate} className="btn-premium btn-primary shadow-2xl px-16 py-6 text-sm">
+                        Apply Structural Changes
+                    </button>
                 </div>
             </div>
         </div>

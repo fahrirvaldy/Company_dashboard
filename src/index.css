@@ -1,87 +1,139 @@
 @import "tailwindcss";
 
-:root {
-  /* Color Palette */
-  --color-primary: #FF8c42; /* Soft Orange */
-  --color-primary-hover: #e07b3a;
-  --color-bg-main: #FDFBF7; /* Warm Cream */
-  --color-bg-card: #FFFFFF;
-  --color-text-main: #2D3748; /* Dark Grey */
-  --color-text-muted: #718096; /* Medium Grey */
-  --color-border: #E2E8F0;
+@theme {
+  --color-brand-50: #FDFBF7;
+  --color-brand-100: #F5F1EE;
+  --color-brand-400: #FF8c42;
+  --color-brand-500: #FF8c42;
+  --color-brand-600: #e07b3a;
   
-  --color-success: #48BB78;
-  --color-danger: #F56565;
-  --color-warning: #ECC94B;
+  --shadow-soft: 0 2px 10px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 2px 12px -2px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
+  /* High-Fidelity Typography Scale */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+:root {
+  --color-primary: #FF8c42;
+  --color-bg-main: #FDFBF7;
+  
+  /* Standardized Text Colors for High Contrast */
+  --text-primary: #0F172A;   /* Slate 900 */
+  --text-secondary: #334155; /* Slate 700 */
+  --text-muted: #64748B;     /* Slate 500 */
+  --text-dim: #94A3B8;       /* Slate 400 */
+  --text-accent: #FF8C42;    /* Brand Orange */
 }
 
 body {
-  margin: 0;
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  @apply m-0 font-sans antialiased text-slate-900 leading-normal;
   background-color: var(--color-bg-main);
-  color: var(--color-text-main);
-  -webkit-font-smoothing: antialiased;
+  color: var(--text-primary);
 }
 
-/* Layout Utilities */
-.app-container {
-  display: flex;
-  min-height: 100vh;
+/* High-Fidelity Typography Scale - Compact Standard */
+.heading-hero {
+  @apply text-3xl lg:text-5xl font-black tracking-tighter uppercase italic leading-[0.85];
+  color: var(--text-primary);
 }
 
-.main-content {
-  flex: 1;
-  padding: var(--spacing-lg);
-  overflow-y: auto;
-  padding-bottom: 80px; /* Space for mobile nav */
+.heading-xl {
+  @apply text-2xl lg:text-4xl font-black tracking-tight uppercase leading-none;
+  color: var(--text-primary);
 }
 
-/* Components */
-.card {
-  @apply bg-white rounded-xl p-6 border border-slate-200 transition-all duration-200;
-  box-shadow: var(--shadow-sm);
+.heading-lg {
+  @apply text-lg lg:text-xl font-extrabold tracking-tight uppercase;
+  color: var(--text-primary);
 }
 
-.card:hover {
-  @apply -translate-y-0.5;
-  box-shadow: var(--shadow-md);
+.heading-md {
+  @apply text-sm lg:text-base font-black uppercase tracking-[0.25em];
+  color: var(--text-secondary);
 }
 
-.btn {
-  @apply bg-[#FF8c42] text-white border-none py-2 px-4 rounded-lg cursor-pointer font-semibold transition-colors duration-200;
+.label-caps {
+  @apply text-[13px] lg:text-[14px] font-extrabold uppercase tracking-[0.2em] leading-none;
+  color: var(--text-dim);
 }
 
-.btn:hover {
-  @apply bg-[#e07b3a];
+.data-value-xl {
+  @apply text-5xl lg:text-7xl font-black tracking-tighter tabular-nums leading-none;
+  color: var(--text-primary);
 }
 
-/* Status Pill (for Meeting Tool) */
-.pill {
-  @apply inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer w-[90px] text-center transition-all duration-200;
+.data-value-lg {
+  @apply text-3xl lg:text-4xl font-black tracking-tight tabular-nums leading-none;
+  color: var(--text-primary);
 }
-.pill:hover { @apply opacity-90 scale-105; }
-.pill.on { @apply bg-emerald-100 text-emerald-800 uppercase; }
-.pill.on::after { content: 'ON TRACK'; }
-.pill.off { @apply bg-rose-100 text-rose-800 uppercase; }
-.pill.off::after { content: 'OFF TRACK'; }
-.pill.done { @apply bg-blue-100 text-blue-800 uppercase; }
-.pill.done::after { content: 'DONE'; }
-.pill.not { @apply bg-slate-100 text-slate-500 uppercase; }
-.pill.not::after { content: 'PENDING'; }
 
-/* PDF Generation Hide */
-.generating-pdf .sidebar { display: none; }
-.generating-pdf { display: block; height: auto; overflow: visible; }
-.generating-pdf .main-content { padding: 0; overflow: visible; }
+.text-body-bold {
+  @apply text-[15px] font-bold leading-relaxed;
+  color: var(--text-secondary);
+}
+
+.text-body-muted {
+  @apply text-[10px] font-semibold leading-relaxed;
+  color: var(--text-muted);
+}
+
+/* Fix for cramped number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin-left: 10px;
+  cursor: pointer;
+  height: 24px; /* Force consistent height */
+  transform: scale(1.1); /* Ensure they remain easy to click */
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  @apply w-1.5 h-1.5;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Card Hierarchy Refinement */
+.card-premium {
+  @apply bg-white rounded-[32px] p-8 border border-slate-100 shadow-card transition-all duration-500;
+}
+
+.card-premium:hover {
+  @apply shadow-float -translate-y-1 border-orange-100;
+}
+
+/* Input Fidelity Refinement */
+.input-premium {
+  @apply w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] text-sm font-bold text-slate-700
+         placeholder:text-slate-300 outline-none transition-all duration-300
+         focus:bg-white focus:ring-[12px] focus:ring-orange-50 focus:border-orange-200;
+}
+
+/* Button Fidelity Refinement */
+.btn-premium {
+  @apply px-8 py-4 bg-slate-900 text-white rounded-[20px] font-black text-[10px] uppercase tracking-[0.2em]
+         transition-all duration-300 shadow-xl shadow-slate-900/10 active:scale-95
+         hover:bg-black hover:shadow-2xl hover:shadow-slate-900/20 flex items-center justify-center gap-3;
+}
+
+.btn-primary {
+  @apply bg-[#FF8c42] border-[#FF8c42] shadow-orange-900/10 hover:bg-[#e07b3a] hover:shadow-orange-900/20;
+}
+
+/* Animation Utilities */
+.animate-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

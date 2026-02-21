@@ -1,188 +1,160 @@
-// Helper for LocalStorage Persistence
-const STORAGE_KEY_PREFIX = 'Angkasa_Dashboard_';
+// Hardened Ecosystem API with Validation and Sync
+const STORAGE_KEY = 'Angkasa_Ecosystem_Data';
 
-const getStoredData = (key, defaultValue) => {
-    const saved = localStorage.getItem(STORAGE_KEY_PREFIX + key);
-    if (saved) return JSON.parse(saved);
-    return defaultValue;
-};
-
-const setStoredData = (key, data) => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(data));
-};
-
-// Initial MOCK Data
-const DEFAULT_METRICS = {
-    gmv: 165000000,
-    netSales: 135000000,
-    profit: 55000000,
-    soldItems: 1340,
-    discountRate: 18,
-    returnRate: 3,
-};
-
-const DEFAULT_MEETING_DATA = {
-    date: new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-    attendance: [
-        { role: 'Div E-Comm', present: true },
-        { role: 'Div HCGA/Fin', present: true },
-        { role: 'Div Live', present: true },
-        { role: 'Div Sales', present: true },
-        { role: 'Div Creative', present: true },
-        { role: 'Div Prod', present: true },
-        { role: 'Div Whs/Log', present: true },
-        { role: 'Notulen', present: true },
-    ],
-    goodNewsBusiness: '',
-    goodNewsPersonal: '',
-    ecommTable: [
-        { kpi: 'Total Omset (5 Brand)', target: 'Rp 285 Jt', realisasi: '...', status: 'on' },
-        { kpi: 'Rata-rata ROAS', target: '> 10x', realisasi: '...', status: 'on' },
-    ],
-    hcgaTable: [
-        { kpi: 'Kesehatan Keuangan', target: 'Positif', realisasi: '...', status: 'on' },
-        { kpi: 'Pemenuhan Manpower', target: '100%', realisasi: '...', status: 'on' },
-    ],
-    liveTable: [
-        { kpi: 'Total Omset Live', target: 'Rp 30 Jt', realisasi: '...', status: 'on' },
-        { kpi: 'Durasi Live', target: '100 Jam', realisasi: '...', status: 'on' },
-    ],
-    salesTable: [
-        { kpi: 'Sales WAB', target: 'Rp 8 Jt', realisasi: '...', status: 'on' },
-        { kpi: 'Respon Chat', target: '> 80%', realisasi: '...', status: 'on' },
-    ],
-    creativeTable: [
-        { kpi: 'Konsistensi Posting', target: '100/mgg', realisasi: '...', status: 'on' },
-        { kpi: 'Produksi Aset Baru', target: '10 SKU', realisasi: '...', status: 'on' },
-    ],
-    prodTable: [
-        { kpi: 'Total Produksi', target: '1000 Set', realisasi: '...', status: 'on' },
-        { kpi: 'Kualitas (Reject)', target: '< 0.5%', realisasi: '...', status: 'on' },
-    ],
-    warehouseTable: [
-        { kpi: 'Akurasi Inventory', target: '100%', realisasi: '...', status: 'on' },
-        { kpi: 'SL Pengiriman', target: '100%', realisasi: '...', status: 'on' },
-    ],
-    rocksTable: [
-        { owner: 'CEO', goal: 'Launch Produk Baru', status: 'on' },
-    ],
-    todoTable: [
-        { task: 'Follow up Vendor A', owner: 'Div Prod', status: 'not' },
-    ],
-    idtIssues: [],
-    discussionNotes: '',
-    actionItems: '',
-    customerHeadlines: '',
-    internalHeadlines: '',
-    ratings: {
-        ecomm: 0,
-        hcga: 0,
-        live: 0,
-        sales: 0,
-        creative: 0,
-        prod: 0,
-        warehouse: 0
+const getStoredData = () => {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+        console.error("Critical: Storage Parse Failure", e);
+        return null;
     }
 };
 
-const DEFAULT_GROWTH_DATA = {
-    current: {
-        leads: 1000,
-        conv: 10,
-        trans: 2,
-        sale: 100000,
-        margin: 25,
-    },
-    target: {
-        leads: 1100,
-        conv: 11,
-        trans: 2.2,
-        sale: 110000,
-        margin: 27.5,
-    },
+const setStoredData = (data) => {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        // Trigger a custom event for cross-tab or cross-component sync
+        window.dispatchEvent(new Event('ecosystem_sync'));
+    } catch (e) {
+        console.error("Critical: Storage Save Failure", e);
+    }
+};
+
+const DEFAULT_ECOSYSTEM_STATE = {
     metrics: {
-        marketing: 5000000,
-        fixedCost: 15000000,
-    }
+        gmv: 165000000,
+        netSales: 135000000,
+        profit: 55000000,
+        soldItems: 1340,
+        discountRate: 18,
+        returnRate: 3,
+    },
+    meeting: {
+        date: new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        attendance: [
+            { role: 'Div E-Comm', present: true },
+            { role: 'Div HCGA/Fin', present: true },
+            { role: 'Div Live', present: true },
+            { role: 'Div Sales', present: true },
+            { role: 'Div Creative', present: true },
+            { role: 'Div Prod', present: true },
+            { role: 'Div Whs/Log', present: true },
+            { role: 'Notulen', present: true },
+        ],
+        goodNewsBusiness: '',
+        goodNewsPersonal: '',
+        ecommTable: [{ kpi: 'Total Omset', target: 'Rp 285 Jt', realisasi: '...', status: 'on' }],
+        hcgaTable: [{ kpi: 'Kesehatan Keuangan', target: 'Positif', realisasi: '...', status: 'on' }],
+        liveTable: [{ kpi: 'Total Omset Live', target: 'Rp 30 Jt', realisasi: '...', status: 'on' }],
+        salesTable: [{ kpi: 'Respon Chat', target: '> 80%', realisasi: '...', status: 'on' }],
+        creativeTable: [{ kpi: 'Konsistensi Posting', target: '100/mgg', realisasi: '...', status: 'on' }],
+        prodTable: [{ kpi: 'Kualitas (Reject)', target: '< 0.5%', realisasi: '...', status: 'on' }],
+        warehouseTable: [{ kpi: 'SL Pengiriman', target: '100%', realisasi: '...', status: 'on' }],
+        rocksTable: [{ owner: 'CEO', goal: 'Launch Dashboard Ecosystem', status: 'on' }],
+        todoTable: [{ task: 'Final UI/UX Fidelity Check', owner: 'Dev', status: 'not' }],
+        idtIssues: [],
+        discussionNotes: '',
+        actionItems: '',
+        customerHeadlines: '',
+        internalHeadlines: '',
+        ratings: { ecomm: 0, hcga: 0, live: 0, sales: 0, creative: 0, prod: 0, warehouse: 0 }
+    },
+    simulator: {
+        current: { leads: 1000, conv: 10, trans: 2, sale: 100000, margin: 25 },
+        target: { leads: 1100, conv: 11, trans: 2.2, sale: 110000, margin: 27.5 },
+        costs: { marketing: 5000000, fixedCost: 15000000 }
+    },
+    chartData: [
+        { name: 'Mon', sales: 120000000 },
+        { name: 'Tue', sales: 110000000 },
+        { name: 'Wed', sales: 135000000 },
+        { name: 'Thu', sales: 125000000 },
+        { name: 'Fri', sales: 140000000 },
+        { name: 'Sat', sales: 155000000 },
+        { name: 'Sun', sales: 135000000 },
+    ],
+    skuData: [
+        { sku: 'SKU-001', name: 'Premium Coffee Bean 500g', stock: 120, status: 'Good' },
+        { sku: 'SKU-002', name: 'Ceramic Mug Set (4pcs)', stock: 15, status: 'Low' },
+        { sku: 'SKU-003', name: 'Electric Coffee Grinder', stock: 5, status: 'Critical' },
+        { sku: 'SKU-004', name: 'Paper Filter V60 (100pcs)', stock: 500, status: 'Good' },
+    ]
 };
 
-const MOCK_CHART_DATA = [
-    { name: 'Mon', sales: 120000000 },
-    { name: 'Tue', sales: 110000000 },
-    { name: 'Wed', sales: 135000000 },
-    { name: 'Thu', sales: 125000000 },
-    { name: 'Fri', sales: 140000000 },
-    { name: 'Sat', sales: 155000000 },
-    { name: 'Sun', sales: 135000000 },
-];
+// Initialize if empty
+if (!getStoredData()) setStoredData(DEFAULT_ECOSYSTEM_STATE);
 
-const MOCK_SKU_DATA = [
-    { sku: 'SKU-001', name: 'Premium Coffee Beans', stock: 120, status: 'Good' },
-    { sku: 'SKU-002', name: 'Ceramic Mug Set', stock: 15, status: 'Low' },
-    { sku: 'SKU-003', name: 'Coffee Grinder', stock: 5, status: 'Critical' },
-    { sku: 'SKU-004', name: 'Filter Paper', stock: 500, status: 'Good' },
-];
-
-// Simulate API delay
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchDashboardMetrics = async () => {
-    await sleep(400);
-    return getStoredData('metrics', DEFAULT_METRICS);
+    await sleep(150);
+    return getStoredData().metrics;
+};
+
+export const updateDashboardMetrics = async (newMetrics) => {
+    await sleep(150);
+    const data = getStoredData();
+    // Sanitize and Merge
+    Object.keys(newMetrics).forEach(key => {
+        const val = parseFloat(newMetrics[key]);
+        if (!isNaN(val)) data.metrics[key] = val;
+    });
+    
+    // Auto-update chart if netSales changes
+    if (newMetrics.netSales) {
+        data.chartData[data.chartData.length - 1].sales = parseFloat(newMetrics.netSales);
+    }
+    
+    setStoredData(data);
+    return data.metrics;
 };
 
 export const fetchSalesChartData = async () => {
-    await sleep(500);
-    return getStoredData('chartData', MOCK_CHART_DATA);
+    await sleep(200);
+    return getStoredData().chartData;
 };
 
 export const fetchSkuData = async () => {
-    await sleep(300);
-    return getStoredData('skuData', MOCK_SKU_DATA);
-};
-
-export const updateDashboardMetrics = async (newData) => {
-    await sleep(300);
-    const current = getStoredData('metrics', DEFAULT_METRICS);
-    const merged = { ...current, ...newData };
-    setStoredData('metrics', merged);
-    
-    // Update chart data if netSales changed (simulating real-time update)
-    if (newData.netSales) {
-        const chart = getStoredData('chartData', MOCK_CHART_DATA);
-        // Update the last day's value
-        chart[chart.length - 1].sales = newData.netSales;
-        setStoredData('chartData', chart);
-    }
-    
-    return merged;
+    await sleep(100);
+    return getStoredData().skuData;
 };
 
 export const fetchMeetingData = async () => {
-    await sleep(400);
-    return getStoredData('meeting', DEFAULT_MEETING_DATA);
+    await sleep(150);
+    return getStoredData().meeting;
 };
 
-export const saveMeetingData = async (data) => {
-    await sleep(400);
-    setStoredData('meeting', data);
-    return data;
+export const saveMeetingData = async (newMeetingData) => {
+    await sleep(300);
+    const data = getStoredData();
+    data.meeting = newMeetingData;
+    setStoredData(data);
+    return data.meeting;
 };
 
 export const fetchGrowthData = async () => {
-    await sleep(400);
-    return getStoredData('growth', DEFAULT_GROWTH_DATA);
+    await sleep(150);
+    return getStoredData().simulator;
 };
 
-export const saveGrowthData = async (data) => {
-    await sleep(400);
-    setStoredData('growth', data);
+export const saveGrowthData = async (newSimData) => {
+    await sleep(300);
+    const data = getStoredData();
+    data.simulator = newSimData;
     
-    // Auto-sync dashboard profit
-    const currentProfit = (data.current.leads * (data.current.conv / 100)) * data.current.trans * data.current.sale * (data.current.margin / 100);
-    const metrics = getStoredData('metrics', DEFAULT_METRICS);
-    metrics.profit = currentProfit;
-    setStoredData('metrics', metrics);
+    // Structural Sync: Simulator results impact Dashboard Profit
+    const c = newSimData.current;
+    const calculatedProfit = Math.round(Math.floor(c.leads * (c.conv / 100)) * c.trans * c.sale * (c.margin / 100));
+    data.metrics.profit = calculatedProfit;
     
-    return data;
+    setStoredData(data);
+    return data.simulator;
+};
+
+export const resetSystem = async () => {
+    if (window.confirm("This will permanently reset all business data to factory defaults. Continue?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        window.location.reload();
+    }
 };

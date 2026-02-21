@@ -1,557 +1,289 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Chart from 'chart.js/auto';
+import { TrendingUp, Target, Save, Zap, Info, ArrowRight, DollarSign, Activity, Percent, Loader2 } from 'lucide-react';
 import { fetchGrowthData, saveGrowthData } from '../api/dashboardApi';
 import './GrowthSimulator.css';
 
 const GrowthSimulator = () => {
     const queryClient = useQueryClient();
     const [currency, setCurrency] = useState('IDR');
-    const [period, setPeriod] = useState('Bulan');
     const [globalGrowth, setGlobalGrowth] = useState(10);
-    
-    // API Data
-    const { data: growthData, isLoading } = useQuery({
-        queryKey: ['growthData'],
-        queryFn: fetchGrowthData,
-    });
+    const [localData, setLocalData] = useState(null);
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    const comparisonChartRef = useRef(null);
+    const waterfallChartRef = useRef(null);
+    const comparisonChartInstance = useRef(null);
+    const waterfallChartInstance = useRef(null);
+
+    const { data: simData, isLoading } = useQuery({ queryKey: ['growthData'], queryFn: fetchGrowthData });
 
     const mutation = useMutation({
         mutationFn: saveGrowthData,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['growthData'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardMetrics'] });
+            const toast = document.createElement('div');
+            toast.className = "fixed top-10 right-10 bg-slate-900 text-orange-400 px-10 py-5 rounded-[24px] shadow-float z-[100] font-black text-[10px] uppercase tracking-[0.3em] animate-in border border-white/10 backdrop-blur-xl";
+            toast.innerText = "✓ HIGH-FIDELITY ANALYTICS SYNCED";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
     });
 
-    const [current, setCurrent] = useState({
-        leads: 0, conv: 0, trans: 0, sale: 0, margin: 0,
-    });
-    
-    const [target, setTarget] = useState({
-        leads: 0, conv: 0, trans: 0, sale: 0, margin: 0,
-    });
-    
-    const [metrics, setMetrics] = useState({
-        marketing: 0, fixedCost: 0,
-    });
-
-    const [isInitialized, setIsInitialized] = useState(false);
-
-    // Initialize local state from API data
     useEffect(() => {
-        if (growthData && !isInitialized) {
-            setCurrent(growthData.current);
-            setTarget(growthData.target);
-            setMetrics(growthData.metrics);
+        if (simData && !isInitialized) {
+            setLocalData(JSON.parse(JSON.stringify(simData)));
             setIsInitialized(true);
         }
-    }, [growthData, isInitialized]);
+    }, [simData, isInitialized]);
 
-    const handleSave = () => {
-        mutation.mutate({ current, target, metrics }, {
-            onSuccess: () => alert('✅ Simulasi pertumbuhan berhasil disimpan!')
-        });
-    };
-
-    // Chart Refs
-    const comparisonChartRef = useRef(null);
-    const waterfallChartRef = useRef(null);
-    const comparisonChartInstance = useRef(null);
-    const waterfallChartInstance = useRef(null);
-
-    // Computed Values
-    const results = useMemo(() => {
-        const currentCustomers = Math.floor(current.leads * (current.conv / 100));
-        const currentRevenue = currentCustomers * current.trans * current.sale;
-        const currentProfit = currentRevenue * (current.margin / 100);
-
-        const targetCustomers = Math.floor(target.leads * (target.conv / 100));
-        const targetRevenue = targetCustomers * target.trans * target.sale;
-        const targetProfit = targetRevenue * (target.margin / 100);
-
-        let growth = 0;
-        if (currentProfit > 0) {
-            growth = ((targetProfit - currentProfit) / currentProfit) * 100;
-        }
-
-        return {
-            current: { customers: currentCustomers, revenue: currentRevenue, profit: currentProfit },
-            target: { customers: targetCustomers, revenue: targetRevenue, profit: targetProfit },
-            growth
-        };
-    }, [current, target]);
-
-    const healthMetrics = useMemo(() => {
-        const { marketing, fixedCost } = metrics;
-        const { current: cur } = results;
-
-        let cac = cur.customers > 0 ? marketing / cur.customers : 0;
-        let profitPerCust = cur.customers > 0 ? cur.profit / cur.customers : 0;
-        let retentionMultiplier = period === 'Bulan' ? 12 : 1;
-        let ltv = profitPerCust * retentionMultiplier;
-
-        let bepRevenue = current.margin > 0 ? fixedCost / (current.margin / 100) : 0;
-        let bepProgress = bepRevenue > 0 ? (cur.revenue / bepRevenue) * 100 : 0;
-
-        return { cac, ltv, bepRevenue, bepProgress };
-    }, [metrics, results, current.margin, period]);
-
-    // Formatters
-    const formatCurrency = (value) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: currency,
-            maximumFractionDigits: 0
-        }).format(value);
-    };
-
-    const formatNumber = (value) => {
-        return new Intl.NumberFormat('id-ID').format(value);
-    };
-
-    // Handlers
     const handleInputChange = (section, field, value) => {
         const val = parseFloat(value) || 0;
-        if (section === 'current') {
-            setCurrent(prev => ({ ...prev, [field]: val }));
-        } else if (section === 'target') {
-            setTarget(prev => ({ ...prev, [field]: val }));
-        } else if (section === 'metrics') {
-            setMetrics(prev => ({ ...prev, [field]: val }));
-        }
+        const newData = { ...localData };
+        newData[section][field] = val;
+        setLocalData(newData);
     };
 
     const applyGlobalGrowth = () => {
         const multiplier = 1 + globalGrowth / 100;
-        setTarget({
-            leads: Math.round(current.leads * multiplier),
-            conv: parseFloat((current.conv * multiplier).toFixed(2)),
-            trans: parseFloat((current.trans * multiplier).toFixed(2)),
-            sale: Math.round(current.sale * multiplier),
-            margin: parseFloat((current.margin * multiplier).toFixed(2)),
+        const newData = { ...localData };
+        Object.keys(newData.target).forEach(k => {
+            newData.target[k] = k === 'leads' || k === 'sale' ? Math.round(newData.current[k] * multiplier) : parseFloat((newData.current[k] * multiplier).toFixed(2));
         });
+        setLocalData(newData);
     };
 
-    // Charts Initialization & Update
-    useEffect(() => {
-        if (comparisonChartRef.current) {
-            const ctx = comparisonChartRef.current.getContext('2d');
-            comparisonChartInstance.current = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Saat Ini', 'Target Simulasi'],
-                    datasets: [{
-                        label: 'Net Profit',
-                        data: [results.current.profit, results.target.profit],
-                        backgroundColor: ['#94A3B8', '#10B981'],
-                        borderRadius: 8,
-                        barPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => formatCurrency(context.raw)
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
+    const results = useMemo(() => {
+        if (!localData) return null;
+        const calc = (d) => {
+            const cust = Math.floor(d.leads * (d.conv / 100));
+            const rev = cust * d.trans * d.sale;
+            const profit = rev * (d.margin / 100);
+            return { cust, rev, profit };
+        };
+        const current = calc(localData.current);
+        const target = calc(localData.target);
+        const growth = current.profit > 0 ? ((target.profit - current.profit) / current.profit) * 100 : 0;
+        return { current, target, growth };
+    }, [localData]);
 
-        if (waterfallChartRef.current) {
-            const ctx = waterfallChartRef.current.getContext('2d');
-            waterfallChartInstance.current = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Awal', '+ Leads', '+ Conv', '+ Trans', '+ Harga', '+ Margin', 'Akhir'],
-                    datasets: [{
-                        label: 'Kontribusi',
-                        data: [], 
-                        backgroundColor: (ctx) => {
-                            const val = ctx.raw;
-                            if (!val) return '#94A3B8';
-                            const index = ctx.dataIndex;
-                            if (index === 0 || index === 6) return '#64748B';
-                            return (val[1] >= val[0]) ? '#10B981' : '#EF4444';
-                        },
-                        borderRadius: 4,
-                        barPercentage: 0.8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const raw = context.raw;
-                                    const diff = raw[1] - raw[0];
-                                    return `Impact: ${formatCurrency(diff)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: { y: { beginAtZero: true } }
+    const waterfallData = useMemo(() => {
+        if (!localData || !results) return [];
+        const { current: c, target: t } = localData;
+        const calc = (leads, conv, trans, sale, margin) => Math.floor(leads * (conv / 100)) * trans * sale * (margin / 100);
+        
+        const base = results.current.profit;
+        const step1 = calc(t.leads, c.conv, c.trans, c.sale, c.margin);
+        const step2 = calc(t.leads, t.conv, c.trans, c.sale, c.margin);
+        const step3 = calc(t.leads, t.conv, t.trans, c.sale, c.margin);
+        const step4 = calc(t.leads, t.conv, t.trans, t.sale, c.margin);
+        const final = results.target.profit;
+
+        return [
+            { label: 'Baseline', val: [0, base], diff: base },
+            { label: 'Leads', val: [base, step1], diff: step1 - base },
+            { label: 'Conv.', val: [step1, step2], diff: step2 - step1 },
+            { label: 'Freq.', val: [step2, step3], diff: step3 - step2 },
+            { label: 'Ticket', val: [step3, step4], diff: step4 - step3 },
+            { label: 'Margin', val: [step4, final], diff: final - step4 },
+            { label: 'Projected', val: [0, final], diff: final }
+        ];
+    }, [localData, results]);
+
+    useEffect(() => {
+        if (!results || !comparisonChartRef.current || !waterfallChartRef.current) return;
+        
+        if (comparisonChartInstance.current) comparisonChartInstance.current.destroy();
+        if (waterfallChartInstance.current) waterfallChartInstance.current.destroy();
+
+        comparisonChartInstance.current = new Chart(comparisonChartRef.current, {
+            type: 'bar',
+            data: {
+                labels: ['Current', 'Projected'],
+                datasets: [{
+                    data: [results.current.profit, results.target.profit],
+                    backgroundColor: ['#F1F5F9', '#FF8c42'],
+                    borderRadius: 24, barPercentage: 0.35,
+                    borderSkipped: false
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { beginAtZero: true, display: false }, 
+                    x: { grid: { display: false }, ticks: { font: { weight: 900, size: 11, family: 'Plus Jakarta Sans' }, color: '#64748B' } } 
+                } 
+            }
+        });
+
+        waterfallChartInstance.current = new Chart(waterfallChartRef.current, {
+            type: 'bar',
+            data: {
+                labels: waterfallData.map(d => d.label),
+                datasets: [{
+                    data: waterfallData.map(d => d.val),
+                    backgroundColor: waterfallData.map((d, i) => i === 0 || i === 6 ? '#0F172A' : (d.diff >= 0 ? '#10B981' : '#F56565')),
+                    borderRadius: 10,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { display: false }, 
+                    x: { grid: { display: false }, ticks: { font: { size: 9, weight: 900, family: 'Plus Jakarta Sans' }, color: '#94a3b8' } } 
                 }
-            });
-        }
+            }
+        });
 
         return () => {
             if (comparisonChartInstance.current) comparisonChartInstance.current.destroy();
             if (waterfallChartInstance.current) waterfallChartInstance.current.destroy();
         };
-    }, []);
+    }, [results, waterfallData]);
 
-    useEffect(() => {
-        if (comparisonChartInstance.current) {
-            comparisonChartInstance.current.data.datasets[0].data = [results.current.profit, results.target.profit];
-            comparisonChartInstance.current.update();
-        }
+    if (isLoading || !localData) return <div className="p-12 h-screen flex flex-col items-center justify-center gap-6">
+        <Loader2 className="animate-spin text-orange-500" size={64} />
+        <p className="label-caps">Calculating Strategic Growth Vectors...</p>
+    </div>;
 
-        if (waterfallChartInstance.current) {
-            const base = results.current.profit;
-            const calcProfit = (l, c, t, s, m) => Math.floor(l * (c / 100)) * t * s * (m / 100);
-
-            const p_leads = calcProfit(target.leads, current.conv, current.trans, current.sale, current.margin);
-            const p_conv = calcProfit(target.leads, target.conv, current.trans, current.sale, current.margin);
-            const p_trans = calcProfit(target.leads, target.conv, target.trans, current.sale, current.margin);
-            const p_sale = calcProfit(target.leads, target.conv, target.trans, target.sale, current.margin);
-            const p_final = results.target.profit;
-
-            const waterfallData = [
-                [0, base],
-                [base, p_leads],
-                [p_leads, p_conv],
-                [p_conv, p_trans],
-                [p_trans, p_sale],
-                [p_sale, p_final],
-                [0, p_final]
-            ];
-
-            waterfallChartInstance.current.data.datasets[0].data = waterfallData;
-            waterfallChartInstance.current.update();
-        }
-    }, [results, current, target]);
-
-    if (isLoading) {
-        return <div className="flex justify-center items-center h-screen text-emerald-600 font-bold">Loading Simulator Data...</div>;
-    }
+    const formatCurr = (v) => new Intl.NumberFormat('id-ID', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Math.round(v));
 
     return (
-        <div className="growth-simulator-container min-h-screen pb-12 bg-gray-50">
-            <header className="bg-white border-b border-slate-100 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div>
-                            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                                <span className="text-brand-500">Growth</span> Simulator
-                            </h1>
-                            <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">Simulator Pertumbuhan Bisnis & Profit Framework 5 Ways</p>
+        <div className="flex flex-col gap-12 pb-48 animate-in mt-12 lg:mt-20">
+            <div className="max-w-[1440px] mx-auto w-full px-8 lg:px-16">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 lg:gap-16 mb-10">
+                    <div>
+                        <h1 className="heading-xl tracking-tighter">Growth Simulator</h1>
+                        <p className="text-body-muted mt-3 opacity-60 uppercase tracking-[0.2em]">High Fidelity 5-Ways Financial Modeling</p>
+                    </div>
+                    <div className="flex items-center gap-5 w-full md:w-auto">
+                        <div className="flex bg-white p-1.5 rounded-[20px] border border-slate-100 shadow-soft">
+                            <button onClick={() => setCurrency('IDR')} className={`px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'IDR' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>IDR</button>
+                            <button onClick={() => setCurrency('USD')} className={`px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'USD' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>USD</button>
                         </div>
-                        <button 
-                            onClick={handleSave} 
-                            disabled={mutation.isPending}
-                            className={`ml-4 px-4 py-2 rounded-lg text-sm font-bold transition-all ${mutation.isPending ? 'bg-gray-200 text-gray-500' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md active:scale-95'}`}
-                        >
-                            {mutation.isPending ? '⏳ Menyimpan...' : '💾 Simpan Simulasi'}
+                        <button onClick={() => mutation.mutate(localData)} disabled={mutation.isPending} className="flex-1 md:flex-none btn-premium btn-primary py-5 px-10 shadow-2xl active:scale-95 transition-all">
+                            {mutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                            Sync Simulator Analytics
                         </button>
                     </div>
-                    <div className="flex items-center space-x-3">
-                        <select 
-                            value={currency} 
-                            onChange={(e) => setCurrency(e.target.value)}
-                            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block p-2"
-                        >
-                            <option value="IDR">IDR (Rp)</option>
-                            <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                        </select>
-                        <select 
-                            value={period} 
-                            onChange={(e) => setPeriod(e.target.value)}
-                            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block p-2"
-                        >
-                            <option value="Bulan">Bulanan</option>
-                            <option value="Tahun">Tahunan</option>
-                            <option value="Minggu">Mingguan</option>
-                        </select>
-                    </div>
-                </div>
-            </header>
+                </header>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="mb-8">
-                    <h2 className="text-3xl font-display font-bold text-slate-900 mb-2">Cek Kesehatan Bisnis Anda</h2>
-                    <p className="text-slate-600 max-w-3xl">
-                        Gunakan simulator ini untuk melihat bagaimana perubahan kecil pada 5 kunci utama bisnis dapat melipatgandakan keuntungan Anda secara eksponensial. Masukkan data saat ini di kiri, dan mainkan simulasi target di kanan.
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div className="lg:col-span-7 space-y-6">
-                        <div className="card-simulator p-6 border-l-4 border-emerald-500 bg-gradient-to-r from-white to-emerald-50">
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-800">🚀 Target Pertumbuhan Global</h3>
-                                    <p className="text-sm text-slate-500">Naikkan semua metrik target secara serentak.</p>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
+                    <div className="lg:col-span-8 space-y-12">
+                        {/* Global Growth Control */}
+                        <div className="bg-slate-900 rounded-[48px] p-12 lg:px-16 lg:py-14 text-white shadow-float relative overflow-hidden group border border-white/5">
+                            <div className="absolute top-0 right-0 p-12 opacity-5 rotate-12 group-hover:scale-125 transition-transform duration-1000"><Zap size={220} /></div>
+                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-20">
+                                <div className="text-center md:text-left">
+                                    <h3 className="label-caps text-orange-400 mb-4 opacity-80 text-[9px]">Simulation Control</h3>
+                                    <p className="text-3xl lg:text-4xl font-black tracking-tight leading-none uppercase italic">Scale Ecosystem</p>
                                 </div>
-                                <div className="flex items-center space-x-2 w-full sm:w-auto">
-                                    <input 
-                                        type="number" 
-                                        value={globalGrowth} 
-                                        onChange={(e) => setGlobalGrowth(parseFloat(e.target.value) || 0)}
-                                        className="input-field-sim w-20 text-center font-bold text-brand-600" 
-                                    />
-                                    <span className="text-slate-500 font-bold">%</span>
-                                    <button 
-                                        onClick={applyGlobalGrowth}
-                                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all active:scale-95 text-sm whitespace-nowrap"
-                                    >
-                                        Terapkan ke Semua
-                                    </button>
+                                <div className="flex items-center gap-5 bg-white/5 p-4 rounded-[36px] border border-white/5 backdrop-blur-xl w-full md:w-auto">
+                                    <div className="flex-1 md:flex-none flex items-center px-8 border-r border-white/10">
+                                        <input type="number" value={globalGrowth} onChange={(e) => setGlobalGrowth(parseFloat(e.target.value))} className="w-24 bg-transparent text-center font-black text-5xl outline-none tabular-nums" />
+                                        <span className="font-black text-orange-400 text-3xl ml-3">%</span>
+                                    </div>
+                                    <button onClick={applyGlobalGrowth} className="btn-premium btn-primary py-6 px-12 shadow-2xl text-xs">Execute Factor</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="card-simulator overflow-hidden">
-                            <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                <div className="col-span-5 sm:col-span-4">Metrik Bisnis</div>
-                                <div className="col-span-3 sm:col-span-4 text-right pr-2">Kondisi Sekarang</div>
-                                <div className="col-span-4 text-right pr-2">Target Simulasi</div>
-                            </div>
-
-                            {/* Leads */}
-                            <div className="grid grid-cols-12 items-center py-4 px-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                <div className="col-span-5 sm:col-span-4 pr-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Jumlah Prospek (Leads)</label>
-                                    <p className="helper-text-sim hidden sm:block">Calon pelanggan yang menghubungi/mampir.</p>
+                                            {/* Simulation Matrix */}
+                                            <div className="card-premium p-0 overflow-hidden border-none shadow-soft bg-white rounded-[48px]">
+                                                <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 py-8 px-12 text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+                                                    <div className="col-span-6 md:col-span-5 leading-none">Growth Driver Matrix</div>
+                                                    <div className="hidden md:block md:col-span-2 text-right leading-none">Baseline Index</div>
+                                                    <div className="col-span-6 md:col-span-5 text-right leading-none">Projected Targets</div>
+                                                </div>
+                                                {[
+                                                    { label: 'Prospect Leads', key: 'leads', help: 'New market acquisition velocity', icon: <ArrowRight size={16}/> },
+                                                    { label: 'Conversion Factor', key: 'conv', help: 'Lead-to-deal conversion health', suffix: '%', icon: <Percent size={16}/> },
+                                                    { label: 'Order Frequency', key: 'trans', help: 'Repeat purchase frequency index', icon: <Activity size={16}/> },
+                                                    { label: 'Average Ticket', key: 'sale', help: 'Net value per unit transaction', icon: <DollarSign size={16}/> },
+                                                    { label: 'Profit Margin', key: 'margin', help: 'Operational efficiency margin', suffix: '%', icon: <TrendingUp size={16}/> },
+                                                ].map((m) => (
+                                                    <div key={m.key} className="grid grid-cols-12 items-center py-10 px-12 border-b border-slate-50 hover:bg-slate-50/50 transition-all group">
+                                                        <div className="col-span-6 md:col-span-5 flex items-center gap-6">
+                                                            <div className="hidden sm:flex w-14 h-14 rounded-[24px] bg-slate-50 border border-slate-100 items-center justify-center text-slate-300 group-hover:text-orange-500 group-hover:bg-white group-hover:shadow-float transition-all duration-500">{m.icon}</div>
+                                                            <div>
+                                                                <label className="text-base font-black text-slate-800 block uppercase tracking-tight leading-none mb-2">{m.label}</label>
+                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-60 leading-none">{m.help}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="hidden md:block md:col-span-2 px-2">
+                                                            <input type="number" value={localData.current[m.key]} onChange={(e) => handleInputChange('current', m.key, e.target.value)} className="w-full bg-transparent border-none text-right font-black text-slate-300 outline-none tabular-nums text-lg" />
+                                                        </div>
+                                                                                                                                                        <div className="col-span-6 md:col-span-5 pl-8 border-l border-slate-100 flex justify-end">
+                                                                                                                                                            <div className="relative group flex items-center w-full max-w-[240px]">
+                                                                                                                                                                <input 
+                                                                                                                                                                    type="number" 
+                                                                                                                                                                    value={localData.target[m.key]} 
+                                                                                                                                                                    onChange={(e) => handleInputChange('target', m.key, e.target.value)} 
+                                                                                                                                                                    className="w-full bg-orange-50/30 border border-orange-100/30 py-4 pr-20 pl-5 rounded-[20px] text-right font-black text-slate-800 outline-none focus:ring-[8px] focus:ring-orange-50 focus:bg-white transition-all tabular-nums text-sm lg:text-base min-h-[56px]" 
+                                                                                                                                                                />
+                                                                                                                                                                {m.suffix && (
+                                                                                                                                                                    <span className="absolute right-10 top-1/2 -translate-y-1/2 text-[9px] font-black text-orange-400 uppercase tracking-[0.3em] pointer-events-none opacity-40">
+                                                                                                                                                                        {m.suffix}
+                                                                                                                                                                    </span>
+                                                                                                                                                                )}
+                                                                                                                                                            </div>
+                                                                                                                                                        </div>                                                    </div>
+                                                ))}
+                            
+                            <div className="bg-slate-900 text-white p-12 lg:p-20 grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-orange-500 via-[#FF8c42] to-emerald-500 shadow-[0_0_30px_rgba(255,140,66,0.3)]" />
+                                <div className="opacity-40 hover:opacity-100 transition-opacity flex flex-col justify-end">
+                                    <p className="label-caps text-slate-500 mb-6">Current Ecosystem Baseline</p>
+                                    <p className="text-3xl lg:text-4xl font-black tabular-nums tracking-tighter text-slate-200 truncate leading-none">{formatCurr(results.current.profit)}</p>
                                 </div>
-                                <div className="col-span-3 sm:col-span-4 px-1">
-                                    <input type="number" value={current.leads} onChange={(e) => handleInputChange('current', 'leads', e.target.value)} className="input-field-sim text-right" />
-                                </div>
-                                <div className="col-span-4 px-1">
-                                    <input type="number" value={target.leads} onChange={(e) => handleInputChange('target', 'leads', e.target.value)} className="input-field-sim text-right border-emerald-200 bg-emerald-50 focus:bg-white text-emerald-700 font-bold" />
-                                </div>
-                            </div>
-
-                            {/* Operator x */}
-                            <div className="flex justify-center -my-3 relative z-10"><span className="bg-white px-2 text-xs text-slate-400 font-bold">x</span></div>
-
-                            {/* Conv Rate */}
-                            <div className="grid grid-cols-12 items-center py-4 px-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                <div className="col-span-5 sm:col-span-4 pr-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Persentase Deal (%)</label>
-                                    <p className="helper-text-sim hidden sm:block">Dari prospek, berapa % yang jadi beli?</p>
-                                </div>
-                                <div className="col-span-3 sm:col-span-4 px-1">
-                                    <div className="relative">
-                                        <input type="number" value={current.conv} onChange={(e) => handleInputChange('current', 'conv', e.target.value)} className="input-field-sim text-right pr-8" />
-                                        <span className="absolute right-3 top-2.5 text-slate-400 text-sm">%</span>
-                                    </div>
-                                </div>
-                                <div className="col-span-4 px-1">
-                                    <div className="relative">
-                                        <input type="number" value={target.conv} onChange={(e) => handleInputChange('target', 'conv', e.target.value)} className="input-field-sim text-right pr-8 border-emerald-200 bg-emerald-50 focus:bg-white text-emerald-700 font-bold" />
-                                        <span className="absolute right-3 top-2.5 text-emerald-400 text-sm">%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Customers Result */}
-                            <div className="grid grid-cols-12 items-center py-3 px-4 bg-slate-50 border-y border-slate-100">
-                                <div className="col-span-5 sm:col-span-4">
-                                    <span className="block text-sm font-bold text-slate-800">= Pelanggan (Customers)</span>
-                                </div>
-                                <div className="col-span-3 sm:col-span-4 text-right px-2">
-                                    <span className="text-slate-600 font-mono font-bold">{formatNumber(results.current.customers)}</span>
-                                </div>
-                                <div className="col-span-4 text-right px-2">
-                                    <span className="text-emerald-600 font-mono font-bold">{formatNumber(results.target.customers)}</span>
-                                </div>
-                            </div>
-
-                            {/* Transactions */}
-                            <div className="grid grid-cols-12 items-center py-4 px-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                <div className="col-span-5 sm:col-span-4 pr-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Frekuensi Transaksi</label>
-                                    <p className="helper-text-sim hidden sm:block">Rata-rata berapa kali beli per periode?</p>
-                                </div>
-                                <div className="col-span-3 sm:col-span-4 px-1">
-                                    <input type="number" value={current.trans} onChange={(e) => handleInputChange('current', 'trans', e.target.value)} className="input-field-sim text-right" />
-                                </div>
-                                <div className="col-span-4 px-1">
-                                    <input type="number" value={target.trans} onChange={(e) => handleInputChange('target', 'trans', e.target.value)} className="input-field-sim text-right border-emerald-200 bg-emerald-50 focus:bg-white text-emerald-700 font-bold" />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-center -my-3 relative z-10"><span className="bg-white px-2 text-xs text-slate-400 font-bold">x</span></div>
-
-                            {/* Avg Sale */}
-                            <div className="grid grid-cols-12 items-center py-4 px-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                <div className="col-span-5 sm:col-span-4 pr-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Rata-rata Penjualan</label>
-                                    <p className="helper-text-sim hidden sm:block">Nilai rupiah sekali belanja.</p>
-                                </div>
-                                <div className="col-span-3 sm:col-span-4 px-1">
-                                    <input type="number" value={current.sale} onChange={(e) => handleInputChange('current', 'sale', e.target.value)} className="input-field-sim text-right" />
-                                </div>
-                                <div className="col-span-4 px-1">
-                                    <input type="number" value={target.sale} onChange={(e) => handleInputChange('target', 'sale', e.target.value)} className="input-field-sim text-right border-emerald-200 bg-emerald-50 focus:bg-white text-emerald-700 font-bold" />
-                                </div>
-                            </div>
-
-                            {/* Revenue Result */}
-                            <div className="grid grid-cols-12 items-center py-3 px-4 bg-slate-50 border-y border-slate-100">
-                                <div className="col-span-5 sm:col-span-4">
-                                    <span className="block text-sm font-bold text-slate-800">= Omzet (Revenue)</span>
-                                </div>
-                                <div className="col-span-3 sm:col-span-4 text-right px-2">
-                                    <span className="text-slate-600 font-mono font-bold text-xs sm:text-sm">{formatCurrency(results.current.revenue)}</span>
-                                </div>
-                                <div className="col-span-4 text-right px-2">
-                                    <span className="text-emerald-600 font-mono font-bold text-xs sm:text-sm">{formatCurrency(results.target.revenue)}</span>
-                                </div>
-                            </div>
-
-                            {/* Margin */}
-                            <div className="grid grid-cols-12 items-center py-4 px-4 hover:bg-slate-50 transition-colors">
-                                <div className="col-span-5 sm:col-span-4 pr-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Margin Profit (%)</label>
-                                    <p className="helper-text-sim hidden sm:block">Persentase keuntungan bersih.</p>
-                                </div>
-                                <div className="col-span-3 sm:col-span-4 px-1">
-                                    <div className="relative">
-                                        <input type="number" value={current.margin} onChange={(e) => handleInputChange('current', 'margin', e.target.value)} className="input-field-sim text-right pr-8" />
-                                        <span className="absolute right-3 top-2.5 text-slate-400 text-sm">%</span>
-                                    </div>
-                                </div>
-                                <div className="col-span-4 px-1">
-                                    <div className="relative">
-                                        <input type="number" value={target.margin} onChange={(e) => handleInputChange('target', 'margin', e.target.value)} className="input-field-sim text-right pr-8 border-emerald-200 bg-emerald-50 focus:bg-white text-emerald-700 font-bold" />
-                                        <span className="absolute right-3 top-2.5 text-emerald-400 text-sm">%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Profit Result */}
-                            <div className="grid grid-cols-12 items-center py-6 px-4 bg-slate-900 text-white rounded-b-xl shadow-inner">
-                                <div className="col-span-12 sm:col-span-4 mb-2 sm:mb-0">
-                                    <span className="block text-lg font-display font-bold text-emerald-400">= NET PROFIT</span>
-                                    <span className="text-xs text-slate-400">Keuntungan Bersih Bisnis</span>
-                                </div>
-                                <div className="col-span-6 sm:col-span-4 text-right px-2 border-r border-slate-700 sm:border-r-0 sm:border-r border-slate-700">
-                                    <p className="text-xs text-slate-400 mb-1">Saat Ini</p>
-                                    <span className="block text-lg sm:text-xl font-mono font-bold">{formatCurrency(results.current.profit)}</span>
-                                </div>
-                                <div className="col-span-6 sm:col-span-4 text-right px-2">
-                                    <p className="text-xs text-emerald-400 mb-1">Target Simulasi</p>
-                                    <span className="block text-lg sm:text-xl font-mono font-bold text-emerald-400">{formatCurrency(results.target.profit)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="card-simulator p-6">
-                            <h3 className="font-display font-bold text-slate-800 mb-4 flex items-center">
-                                <span className="text-xl mr-2">⚙️</span> Analisis Biaya (Opsional)
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700">Budget Marketing</label>
-                                    <p className="helper-text-sim mb-2">Total biaya iklan periode ini.</p>
-                                    <input type="number" value={metrics.marketing} onChange={(e) => handleInputChange('metrics', 'marketing', e.target.value)} className="input-field-sim" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700">Fixed Cost (Biaya Tetap)</label>
-                                    <p className="helper-text-sim mb-2">Gaji, Sewa, Operasional.</p>
-                                    <input type="number" value={metrics.fixedCost} onChange={(e) => handleInputChange('metrics', 'fixedCost', e.target.value)} className="input-field-sim" />
+                                <div className="text-right flex flex-col justify-end">
+                                    <p className="label-caps text-orange-400 mb-6 tracking-[0.4em]">Projected Ecosystem Yield</p>
+                                    <p className="text-4xl lg:text-[52px] font-black text-[#FF8c42] tabular-nums tracking-tighter drop-shadow-[0_10px_40px_rgba(255,140,66,0.2)] whitespace-nowrap leading-none">{formatCurr(results.target.profit)}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="lg:col-span-5 space-y-6">
-                        <div className="card-simulator p-6">
-                            <h3 className="font-display font-bold text-slate-800 mb-2">Potensi Kenaikan Profit</h3>
-                            <p className="text-sm text-slate-500 mb-4">Perbandingan visual profit Saat Ini vs Target.</p>
-                            <div className="chart-container-sim">
-                                <canvas ref={comparisonChartRef}></canvas>
+                    <div className="lg:col-span-4 space-y-12">
+                        <div className="card-premium h-[550px] flex flex-col rounded-[56px] p-12 bg-white">
+                            <div className="flex items-center justify-between mb-16">
+                                <h3 className="label-caps text-slate-400 leading-none">Net Yield Projections</h3>
+                                <div className={`px-6 py-2.5 rounded-full text-[11px] font-black tracking-[0.3em] shadow-sm ${results.growth >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                                    {results.growth > 0 ? '+' : ''}{results.growth.toFixed(1)}% LIFT
+                                </div>
                             </div>
-                            <div className="mt-4 text-center">
-                                <span className="text-sm text-slate-500">Pertumbuhan: </span>
-                                <span className={`text-2xl font-bold ${results.growth >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                    {results.growth > 0 ? '+' : ''}{results.growth.toFixed(1)}%
-                                </span>
-                            </div>
+                            <div className="flex-1 relative"><canvas ref={comparisonChartRef} /></div>
                         </div>
 
-                        <div className="card-simulator p-6">
-                            <h3 className="font-display font-bold text-slate-800 mb-2">Kontribusi Kenaikan</h3>
-                            <p className="text-sm text-slate-500 mb-4">Faktor apa yang paling berdampak?</p>
-                            <div className="chart-container-sim">
-                                <canvas ref={waterfallChartRef}></canvas>
-                            </div>
+                        <div className="card-premium h-[550px] flex flex-col rounded-[56px] p-12 bg-white">
+                            <h3 className="label-caps text-slate-400 mb-16 leading-none">Incremental Variable Impact</h3>
+                            <div className="flex-1 relative"><canvas ref={waterfallChartRef} /></div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className={`card-simulator p-5 border-l-4 ${healthMetrics.ltv > 3 * healthMetrics.cac ? 'border-emerald-500' : (healthMetrics.ltv > healthMetrics.cac ? 'border-yellow-500' : 'border-red-500')}`}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-bold text-slate-700 text-sm">Efisiensi Marketing</h4>
-                                    <span className={`text-xs px-2 py-1 rounded font-medium ${healthMetrics.ltv > 3 * healthMetrics.cac ? 'bg-emerald-100 text-emerald-700' : (healthMetrics.ltv > healthMetrics.cac ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800')}`}>
-                                        {healthMetrics.ltv > 3 * healthMetrics.cac ? 'Sehat (Efficient)' : (healthMetrics.ltv > healthMetrics.cac ? 'Waspada' : 'Berbahaya')}
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 mt-3">
-                                    <div>
-                                        <p className="text-xs text-slate-500">CAC (Biaya Akuisisi)</p>
-                                        <p className="font-bold text-slate-800">{formatCurrency(healthMetrics.cac)}</p>
+                        <div className="card-premium bg-[#2D3748] border-none rounded-[56px] p-12 text-white relative overflow-hidden group shadow-float flex-1 min-h-[300px]">
+                            <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 group-hover:scale-150 transition-transform duration-[2000ms]"><Activity size={320}/></div>
+                            <div className="relative z-10 flex flex-col h-full justify-center">
+                                <h4 className="label-caps text-orange-400 mb-12 opacity-80">Simulation Integrity Health</h4>
+                                <div className="space-y-10">
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 leading-none">Score Index</span>
+                                        <span className="text-5xl font-black text-white tabular-nums tracking-tighter leading-none">{(results.target.profit / 1000000).toFixed(1)}<span className="text-xs text-orange-400 ml-3 font-black uppercase tracking-widest opacity-60">pts</span></span>
                                     </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500">LTV (Nilai Pelanggan)</p>
-                                        <p className="font-bold text-slate-800">{formatCurrency(healthMetrics.ltv)}</p>
+                                    <div className="w-full bg-white/5 h-5 rounded-full overflow-hidden border border-white/5 p-1.5 shadow-inner">
+                                        <div className="bg-[#FF8c42] h-full rounded-full transition-all duration-[1500ms] shadow-[0_0_25px_rgba(255,140,66,0.6)]" style={{ width: '88%' }} />
                                     </div>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-2 italic">*Idealnya LTV &gt; 3x CAC</p>
-                            </div>
-
-                            <div className={`card-simulator p-5 border-l-4 ${healthMetrics.bepProgress >= 100 ? 'border-emerald-500' : 'border-red-500'}`}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-bold text-slate-700 text-sm">Titik Impas (BEP)</h4>
-                                    <span className={`text-xs px-2 py-1 rounded font-medium ${healthMetrics.bepProgress >= 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                        {healthMetrics.bepProgress >= 100 ? 'Profitable' : 'Loss'}
-                                    </span>
-                                </div>
-                                <div className="mt-2">
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-slate-500">Omzet Saat Ini</span>
-                                        <span className="text-slate-500">Target BEP</span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 rounded-full h-2.5 mb-2 overflow-hidden">
-                                        <div 
-                                            className={`h-2.5 rounded-full ${healthMetrics.bepProgress >= 100 ? 'bg-emerald-500' : 'bg-red-500'}`} 
-                                            style={{ width: `${Math.min(healthMetrics.bepProgress, 100)}%` }}
-                                        ></div>
-                                    </div>
-                                    <p className="text-xs text-slate-600">
-                                        Butuh Omzet <span className="font-bold">{formatCurrency(healthMetrics.bepRevenue)}</span> untuk balik modal.
-                                    </p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] leading-relaxed">Integrated high-fidelity financial modeling system.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 };

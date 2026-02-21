@@ -1,111 +1,66 @@
-:root {
-    /* Harmonized Theme */
-    --sidebar-bg: #2D3748;     /* Darker Grey for contrast */
-    --sidebar-text: #FDFBF7;   /* Warm Cream text */
-    --sidebar-active: #FF8c42; /* Soft Orange (Primary) */
-    
-    --main-bg: #FDFBF7;        /* Warm Cream Background */
-    --card-bg: #FFFFFF;        /* White Card */
-    
-    --primary: #2D3748;        /* Text Primary */
-    --secondary: #718096;      /* Text Secondary / Accent */
-    --border: #E2E8F0;         /* Soft Border */
-    
-    /* Status Colors */
-    --success-bg: #C6F6D5; --success-text: #276749;
-    --danger-bg: #FED7D7;  --danger-text: #9B2C2C;
-    --warning-bg: #FEEBC8; --warning-text: #9C4221;
-}
-
-.performance-meeting-tool * { box-sizing: border-box; outline: none; }
-
+/* Minimal overrides for MeetingTool */
 .performance-meeting-tool {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color: var(--primary);
+    font-family: sans-serif;
 }
 
-/* --- CARDS & UI ELEMENTS --- */
-.performance-meeting-tool .card {
-    background: var(--card-bg); border-radius: 12px;
-    padding: 25px; border: 1px solid var(--border);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-    height: 100%; display: flex; flex-direction: column;
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
 }
 
-.performance-meeting-tool table { width: 100%; border-collapse: separate; border-spacing: 0; }
-.performance-meeting-tool th { 
-    text-align: left; padding: 12px 15px; 
-    background: #FAFAFA; color: var(--secondary); 
-    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border);
-}
-.performance-meeting-tool td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
-.performance-meeting-tool tr:last-child td { border-bottom: none; }
-
-.performance-meeting-tool .input-bare {
-    width: 100%; background: transparent; border: none;
-    font-size: inherit; color: inherit; padding: 5px 0;
-    border-bottom: 1px dashed transparent;
-}
-.performance-meeting-tool .input-bare:hover { border-bottom-color: var(--border); }
-.performance-meeting-tool .input-bare:focus { border-bottom-color: var(--secondary); }
-
-/* Status Pills */
-.performance-meeting-tool .pill {
-    display: inline-flex; align-items: center; justify-content: center;
-    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-    cursor: pointer; width: 90px; text-align: center; transition: all 0.2s;
-}
-.performance-meeting-tool .pill:hover { opacity: 0.9; transform: scale(1.05); }
-
-.performance-meeting-tool .pill.on { background: var(--success-bg); color: var(--success-text); }
-.performance-meeting-tool .pill.on::after { content: 'ON TRACK'; }
-.performance-meeting-tool .pill.off { background: var(--danger-bg); color: var(--danger-text); }
-.performance-meeting-tool .pill.off::after { content: 'OFF TRACK'; }
-
-.performance-meeting-tool .pill.done { background: #E3F2FD; color: #1565C0; }
-.performance-meeting-tool .pill.done::after { content: 'DONE'; }
-.performance-meeting-tool .pill.not { background: #F5F5F5; color: #9E9E9E; }
-.performance-meeting-tool .pill.not::after { content: 'PENDING'; }
-
-/* Custom Grids */
-.performance-meeting-tool .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%; }
-.performance-meeting-tool .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; height: 100%; }
-
-/* IDS Specific */
-.performance-meeting-tool .ids-col {
-    background: #FAFAFA; border-radius: 8px; padding: 15px;
-    display: flex; flex-direction: column; height: 100%;
-    border: 1px solid #eee;
-}
-.performance-meeting-tool .ids-header { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
-
-.performance-meeting-tool .ids-item { 
-    background: #fff; padding: 10px; border-radius: 6px; 
-    margin-bottom: 8px; border: 1px solid #eee; display: flex; gap: 10px; align-items: start;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-/* Buttons */
-.performance-meeting-tool .btn-add {
-    width: 100%; padding: 10px; margin-top: 10px;
-    background: transparent; border: 1px dashed var(--secondary); color: var(--secondary);
-    border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 99px;
+}
+
+.performance-meeting-tool table {
+    width: 100%;
+    border-separate: separate;
+    border-spacing: 0;
+}
+
+.performance-meeting-tool th {
+    text-align: left;
+    padding: 1rem;
+    background-color: #f8fafc;
+    font-size: 10px;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.performance-meeting-tool td {
+    padding: 1rem;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+.input-bare {
+    width: 100%;
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+
+.btn-action {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 900;
+    border-radius: 0.5rem;
+    cursor: pointer;
     transition: all 0.2s;
 }
-.performance-meeting-tool .btn-add:hover { background: rgba(141, 110, 99, 0.05); border-style: solid; }
-
-.performance-meeting-tool .header-bar {
-    display: flex; justify-content: space-between; align-items: end;
-    margin-bottom: 25px; border-bottom: 2px solid var(--border);
-    padding-bottom: 15px;
-}
-.performance-meeting-tool .page-title { margin: 0; font-size: 24px; color: var(--primary); font-weight: 700; }
-.performance-meeting-tool .page-subtitle { margin: 5px 0 0 0; font-size: 14px; color: var(--secondary); }
-
-/* PDF Generation Hide */
-.generating-pdf .sidebar { display: none; }
-.generating-pdf { display: block; height: auto; overflow: visible; }
-.generating-pdf .main-content { padding: 0; overflow: visible; }
-.generating-pdf .section { display: block; margin-bottom: 40px; page-break-inside: avoid; }
-.generating-pdf .card { border: 1px solid #ddd; box-shadow: none; }
