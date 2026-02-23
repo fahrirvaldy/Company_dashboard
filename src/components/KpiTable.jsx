@@ -64,10 +64,18 @@ const KpiTable = ({ title, data, onUpdate, onAddRow }) => {
                                         />
                                     </div>
                                 </div>
-                                <div className="col-span-1 flex justify-end">
-                                    <div className={`pill scale-125 shadow-xl transition-all active:scale-110 ${row.status === 'on' ? 'shadow-emerald-900/10' : 'shadow-rose-900/10'}`} onClick={() => onUpdate(idx, 'status', row.status === 'on' ? 'off' : 'on')} />
-                                </div>
-                            </div>
+                                                            <div className="col-span-1 flex justify-end">
+                                                                <button 
+                                                                    onClick={() => onUpdate(idx, 'status', row.status === 'on' ? 'off' : 'on')}
+                                                                    className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
+                                                                        row.status === 'on' 
+                                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100' 
+                                                                        : 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100 animate-pulse'
+                                                                    }`}
+                                                                >
+                                                                    {row.status === 'on' ? 'ON TRACK' : 'OFF TRACK'}
+                                                                </button>
+                                                            </div>                            </div>
                         ))}
                     </div>
                 </div>

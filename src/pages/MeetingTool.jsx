@@ -6,8 +6,8 @@ import {
     ListCheck, MessageSquare, Star, FileText, TrendingUp, Save, Trash2, CheckCircle2,
     ChevronLeft, ChevronRight, Share2, Printer, Loader2
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { pdf } from '@react-pdf/renderer';
+import MeetingPDFReport from '../components/MeetingPDFReport';
 
 import MeetingTimer from '../components/MeetingTimer';
 import KpiTable from '../components/KpiTable';
@@ -93,29 +93,46 @@ const MeetingTool = () => {
     };
 
     const handleRatingChange = (div, val) => {
-        const v = parseFloat(val);
-        if (v >= 0 && v <= 10) {
+        const v = val === '' ? 0 : parseFloat(val);
+        if (!isNaN(v) && v >= 0 && v <= 10) {
             const newData = { ...localData };
             newData.ratings[div] = v;
             setLocalData(newData);
         }
     };
 
-    const averageRating = useMemo(() => {
-        if (!localData?.ratings) return 0;
-        const vals = Object.values(localData.ratings).filter(v => v > 0);
-        return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 0;
-    }, [localData?.ratings]);
+    // Derived Live State: Forces real-time recalculation on every keystroke
+    const averageRating = (() => {
+        if (!localData?.ratings) return "0.0";
+        const vals = Object.values(localData.ratings);
+        const sum = vals.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+        return (sum / 7).toFixed(1);
+    })();
 
     const exportToPDF = async () => {
-        const element = pdfRef.current;
-        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#FDFBF7' });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Angkasa_Report_${localData.date.replace(/\s/g, '_')}.pdf`);
+        try {
+            const toast = document.createElement('div');
+            toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-10 py-5 rounded-[24px] shadow-float z-[100] font-black text-[10px] uppercase tracking-[0.3em] animate-in border border-white/10 backdrop-blur-xl";
+            toast.innerText = "⚡ Generating High-Fidelity Vector PDF...";
+            document.body.appendChild(toast);
+
+            // In a real scenario, you'd pull Base64 from Chart.js instances if they existed here
+            // const chartImages = { waterfall: waterfallInstance.toBase64Image() };
+            const chartImages = {}; 
+
+            const blob = await pdf(<MeetingPDFReport data={localData} chartImages={chartImages} />).toBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Angkasa_Report_${localData.date.replace(/\s/g, '_')}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            toast.innerText = "✓ Report Exported Successfully";
+            setTimeout(() => toast.remove(), 2000);
+        } catch (error) {
+            console.error('PDF Generation Failed:', error);
+        }
     };
 
     if (isLoading || !localData) return <div className="p-12 h-screen flex flex-col items-center justify-center gap-4">
@@ -334,18 +351,39 @@ const MeetingTool = () => {
                 )}
 
                 {activeSection === 12 && (
-                    <div className="max-w-[1400px] mx-auto">
+                    <div className="max-w-[1400px] mx-auto h-full">
                         <IdtSection 
                             issues={localData.idtIssues}
                             discussionNotes={localData.discussionNotes}
                             actionItems={localData.actionItems}
                             onPullIssues={() => {
-                                const issues = [];
+                                const newIssues = [];
+                                // Pull from Division Tables
                                 ['ecommTable','hcgaTable','liveTable','salesTable','creativeTable','prodTable','warehouseTable'].forEach(t => {
-                                    localData[t].forEach(row => { if (row.status === 'off') issues.push(`[${t.replace('Table','')}] ${row.kpi}`); });
+                                    localData[t]?.forEach(row => { 
+                                        if (row.status === 'off') {
+                                            const label = `[${t.replace('Table','').toUpperCase()}] ${row.kpi}`;
+                                            if (!localData.idtIssues.includes(label)) newIssues.push(label);
+                                        } 
+                                    });
                                 });
-                                localData.rocksTable.forEach(r => { if (r.status === 'off') issues.push(`[ROCK] ${r.goal}`); });
-                                updateNested('idtIssues', [...new Set([...localData.idtIssues, ...issues])]);
+                                // Pull from Strategic Rocks
+                                localData.rocksTable?.forEach(r => { 
+                                    if (r.status === 'off') {
+                                        const label = `[ROCK] ${r.goal}`;
+                                        if (!localData.idtIssues.includes(label)) newIssues.push(label);
+                                    } 
+                                });
+
+                                if (newIssues.length > 0) {
+                                    updateNested('idtIssues', [...localData.idtIssues, ...newIssues]);
+                                    // Feedback Toast
+                                    const toast = document.createElement('div');
+                                    toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl z-[100] font-black text-[10px] uppercase tracking-widest animate-in";
+                                    toast.innerText = `✓ PULLED ${newIssues.length} OFF-TRACK ISSUES`;
+                                    document.body.appendChild(toast);
+                                    setTimeout(() => toast.remove(), 2000);
+                                }
                             }}
                             onAddIssue={() => updateNested('idtIssues', [...localData.idtIssues, 'Isu baru...'])}
                             onRemoveIssue={(idx) => updateNested('idtIssues', localData.idtIssues.filter((_, i) => i !== idx))}

@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@layer base {
+  html {
+    /* Standard scale for mobile/small screens */
+    font-size: 100%;
+  }
+
+  /* Scale to 75% for Desktop/Laptop screens (1024px and up) */
+  @media (min-width: 1024px) {
+    html {
+      font-size: 75%; /* Shrinks all REM-based sizing proportionally */
+    }
+  }
+}
+
 @theme {
   --color-brand-50: #FDFBF7;
   --color-brand-100: #F5F1EE;
