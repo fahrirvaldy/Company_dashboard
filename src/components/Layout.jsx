@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard, TrendingUp, CalendarCheck, Menu, X, ChevronRight } from 'lucide-react';
+import CompanyLogo from '../../image/AKSANA - LOGO.png';
 import './Layout.css';
 
 const Layout = () => {
@@ -30,9 +31,7 @@ const Layout = () => {
             {/* Sidebar - Desktop (Pixel Perfect) */}
             <aside className="hidden lg:flex w-[280px] bg-white border-r border-slate-100 flex-col py-10 px-8 h-screen sticky top-0 shrink-0 z-50">
                 <div className="flex items-center gap-4 mb-16 group cursor-pointer">
-                    <div className="w-10 h-10 bg-[#FF8c42] rounded-2xl shadow-xl shadow-orange-200 flex items-center justify-center transition-transform group-hover:rotate-12 duration-300">
-                        <TrendingUp size={22} className="text-white" />
-                    </div>
+                    <img src={CompanyLogo} alt="Aksana Logo" className="w-11 h-11 rounded-xl object-cover shadow-lg shadow-orange-900/10 transition-transform group-hover:rotate-12 duration-300" />
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter leading-none uppercase">ANGKASA</h1>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Enterprise</p>
@@ -67,9 +66,7 @@ const Layout = () => {
                 {/* Global Mobile Header */}
                 <header className={`lg:hidden flex items-center justify-between px-6 py-5 bg-white transition-all duration-300 z-[60] ${scrolled ? 'shadow-lg py-4' : 'border-b border-slate-50'}`}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#FF8c42] rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">
-                            <TrendingUp size={16} className="text-white" />
-                        </div>
+                        <img src={CompanyLogo} alt="Aksana Logo" className="w-9 h-9 rounded-lg object-cover shadow-lg shadow-orange-900/10" />
                         <span className="font-black text-slate-800 tracking-tighter text-base uppercase">ANGKASA</span>
                     </div>
                     <button 
@@ -93,9 +90,7 @@ const Layout = () => {
             <div className={`lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[70] transition-all duration-500 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsMobileMenuOpen(false)}>
                 <aside className={`w-[80%] max-w-[320px] bg-white h-full p-10 flex flex-col shadow-2xl transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`} onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-4 mb-16">
-                        <div className="w-10 h-10 bg-[#FF8c42] rounded-2xl flex items-center justify-center shadow-xl shadow-orange-200">
-                            <TrendingUp size={22} className="text-white" />
-                        </div>
+                        <img src={CompanyLogo} alt="Aksana Logo" className="w-11 h-11 rounded-xl object-cover shadow-xl shadow-orange-900/10" />
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">ANGKASA</h1>
                     </div>
                     <nav className="space-y-4">
