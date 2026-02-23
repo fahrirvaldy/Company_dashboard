@@ -65,7 +65,7 @@ const Dashboard = () => {
     if (isLoadingMetrics || isLoadingChart || isLoadingSku) return <div className="p-12 text-center animate-pulse"><p className="label-caps">Initializing ecosystem...</p></div>;
 
     return (
-        <div className="flex flex-col gap-8 animate-in mt-12 lg:mt-20 px-6 lg:px-0">
+        <div className="flex flex-col gap-8 animate-in mt-4 lg:mt-20 px-6 lg:px-0">
             {/* Header Section */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-6">
                 <div>
@@ -252,7 +252,7 @@ const Dashboard = () => {
                             <input 
                                 type="number" 
                                 name={key} 
-                                className="w-full px-8 py-8 lg:py-10 bg-white border border-slate-100 rounded-[32px] text-xl font-black text-slate-800 tabular-nums shadow-soft focus:ring-[16px] focus:ring-orange-50 focus:border-orange-400 outline-none transition-all placeholder:text-slate-200 min-h-[80px]" 
+                                className="w-full px-8 py-8 lg:py-10 bg-white border border-slate-100 rounded-[32px] text-xl font-black text-slate-800 tabular-nums shadow-soft focus:ring-[16px] focus:ring-orange-50 focus:border-orange-400 outline-none transition-all placeholder:text-slate-200 min-h-[80px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                                 placeholder={metrics?.[key]?.toString() || '0'} 
                                 value={manualInputs[key]} 
                                 onChange={(e) => setManualInputs(p => ({...p, [e.target.name]: e.target.value}))} 

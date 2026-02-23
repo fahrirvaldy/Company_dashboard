@@ -18,7 +18,7 @@ const Card = ({ title, value, trend, subtext, icon }) => {
             
             <div className="flex items-end justify-between min-w-0 mt-auto">
                 <div className="flex flex-col gap-1 min-w-0 flex-1">
-                    <h3 className="data-value-lg tracking-tighter group-hover:translate-x-1 transition-transform duration-500 truncate">{value}</h3>
+                    <h3 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tighter group-hover:translate-x-1 transition-transform duration-500 break-words leading-tight">{value}</h3>
                 </div>
                 {trend !== undefined && (
                     <div className={`flex items-center gap-2 px-5 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${

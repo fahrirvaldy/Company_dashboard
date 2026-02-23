@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, TrendingUp, CalendarCheck, Settings, Menu, X, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, CalendarCheck, Menu, X, ChevronRight } from 'lucide-react';
 import './Layout.css';
 
 const Layout = () => {
@@ -60,13 +60,6 @@ const Layout = () => {
                         </NavLink>
                     ))}
                 </nav>
-
-                <div className="mt-auto pt-10 border-t border-slate-50">
-                    <button className="flex items-center gap-4 px-5 py-4 text-sm font-bold text-slate-400 hover:text-slate-900 w-full transition-all rounded-2xl hover:bg-slate-50 group">
-                        <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500" />
-                        <span>Settings</span>
-                    </button>
-                </div>
             </aside>
 
             {/* Main Content Area */}
@@ -89,11 +82,10 @@ const Layout = () => {
 
                 {/* Content Container */}
                 <main className={`flex-1 overflow-y-auto custom-scrollbar relative transition-all duration-500 ${isFullBleed ? 'p-0' : 'p-0'}`}>
-                    <div className={`${isFullBleed ? 'h-full w-full' : 'max-w-[1440px] mx-auto px-8 lg:px-16 py-10 lg:py-16 animate-in'}`}>
+                    <div className={`${isFullBleed ? 'h-full w-full' : 'max-w-[1440px] mx-auto px-8 lg:px-16 pt-4 lg:pt-16 pb-10 lg:pb-16 animate-in'}`}>
                         <Outlet />
                     </div>
-                    {/* Safe Area for Mobile Nav */}
-                    <div className="lg:hidden h-28 shrink-0" />
+                    {/* Safe Area for Mobile Nav Placeholder removal */}
                 </main>
             </div>
 
@@ -125,20 +117,6 @@ const Layout = () => {
                     </nav>
                 </aside>
             </div>
-
-            {/* Floating Quick Navigation (Mobile Only) */}
-            <nav className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-sm h-16 glass-card rounded-[24px] shadow-float flex items-center justify-around px-6 z-[60] border border-white/20">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className={({ isActive }) => `flex flex-col items-center gap-1 transition-all duration-300 ${isActive ? 'text-[#FF8c42] -translate-y-1 scale-110' : 'text-slate-400 opacity-50'}`}
-                    >
-                        {item.icon}
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">{item.label}</span>
-                    </NavLink>
-                ))}
-            </nav>
         </div>
     );
 };

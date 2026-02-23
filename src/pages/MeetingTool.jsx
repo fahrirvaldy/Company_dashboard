@@ -147,7 +147,7 @@ const MeetingTool = () => {
                     </div>
                 </div>
 
-                <nav className="flex-1 overflow-x-auto lg:overflow-y-auto custom-scrollbar flex lg:flex-col p-3 lg:p-6">
+                <nav className="hidden lg:flex flex-1 overflow-y-auto custom-scrollbar flex-col p-6">
                     <ul className="flex lg:flex-col gap-1.5 w-max lg:w-full">
                         {navItems.map((item, index) => (
                             <li 
@@ -176,19 +176,19 @@ const MeetingTool = () => {
                     </button>
                 </div>
 
-                {/* Mobile Floating Action Controller */}
-                <div className="lg:hidden flex items-center justify-between px-6 py-4 bg-slate-900 border-t border-white/5 fixed bottom-24 left-6 right-6 z-[60] rounded-[24px] shadow-float border border-white/10">
-                    <button onClick={() => setActiveSection(s => Math.max(0, s-1))} className="p-2 text-white/40"><ChevronLeft size={24}/></button>
+                {/* Mobile Floating Action Controller - High Fidelity Floating */}
+                <div className="lg:hidden flex items-center justify-between px-6 py-4 bg-slate-900 border-t border-white/5 fixed bottom-8 left-6 right-6 z-[60] rounded-[28px] shadow-float border border-white/10 backdrop-blur-xl">
+                    <button onClick={() => setActiveSection(s => Math.max(0, s-1))} className="p-2 text-white/40 active:scale-90 transition-transform"><ChevronLeft size={24}/></button>
                     <div className="text-center flex-1">
-                        <p className="text-xs font-black uppercase text-white tracking-widest">{navItems[activeSection].label}</p>
+                        <p className="text-[10px] font-black uppercase text-white tracking-[0.2em] opacity-80">{navItems[activeSection].label}</p>
                     </div>
-                    <button onClick={() => setActiveSection(s => Math.min(navItems.length-1, s+1))} className="p-2 text-white/40"><ChevronRight size={24}/></button>
-                    <button onClick={handleSave} className="ml-4 p-3 bg-[#FF8c42] rounded-xl text-white shadow-lg"><Save size={20}/></button>
+                    <button onClick={() => setActiveSection(s => Math.min(navItems.length-1, s+1))} className="p-2 text-white/40 active:scale-90 transition-transform"><ChevronRight size={24}/></button>
+                    <button onClick={handleSave} className="ml-4 p-3 bg-[#FF8c42] rounded-2xl text-white shadow-xl active:scale-90 transition-transform"><Save size={20}/></button>
                 </div>
             </aside>
 
-            {/* Content Area Rendering */}
-            <main ref={pdfRef} className="flex-1 p-10 lg:p-20 min-w-0 pb-48 lg:pb-20 bg-[#FDFBF7] animate-in overflow-x-hidden">
+            {/* Content Area Rendering - Lifted for Floating Controller */}
+            <main ref={pdfRef} className="flex-1 p-10 lg:p-20 min-w-0 pb-64 lg:pb-20 bg-[#FDFBF7] animate-in overflow-x-hidden">
                 {activeSection === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-center max-w-5xl mx-auto py-20 lg:py-0">
                          <div className="mb-10 lg:mb-16">

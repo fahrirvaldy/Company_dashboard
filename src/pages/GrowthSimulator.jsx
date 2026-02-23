@@ -161,12 +161,12 @@ const GrowthSimulator = () => {
                         <h1 className="heading-xl tracking-tighter">Growth Simulator</h1>
                         <p className="text-body-muted mt-3 opacity-60 uppercase tracking-[0.2em]">High Fidelity 5-Ways Financial Modeling</p>
                     </div>
-                    <div className="flex items-center gap-5 w-full md:w-auto">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
                         <div className="flex bg-white p-1.5 rounded-[20px] border border-slate-100 shadow-soft">
-                            <button onClick={() => setCurrency('IDR')} className={`px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'IDR' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>IDR</button>
-                            <button onClick={() => setCurrency('USD')} className={`px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'USD' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>USD</button>
+                            <button onClick={() => setCurrency('IDR')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'IDR' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>IDR</button>
+                            <button onClick={() => setCurrency('USD')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'USD' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>USD</button>
                         </div>
-                        <button onClick={() => mutation.mutate(localData)} disabled={mutation.isPending} className="flex-1 md:flex-none btn-premium btn-primary py-5 px-10 shadow-2xl active:scale-95 transition-all">
+                        <button onClick={() => mutation.mutate(localData)} disabled={mutation.isPending} className="flex-1 md:flex-none btn-premium btn-primary py-3 px-4 md:py-5 md:px-10 shadow-2xl active:scale-95 transition-all">
                             {mutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                             Sync Simulator Analytics
                         </button>
@@ -176,19 +176,19 @@ const GrowthSimulator = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
                     <div className="lg:col-span-8 space-y-12">
                         {/* Global Growth Control */}
-                        <div className="bg-slate-900 rounded-[48px] p-12 lg:px-16 lg:py-14 text-white shadow-float relative overflow-hidden group border border-white/5">
+                        <div className="bg-slate-900 rounded-[48px] p-6 md:p-12 lg:px-16 lg:py-14 text-white shadow-float relative overflow-hidden group border border-white/5">
                             <div className="absolute top-0 right-0 p-12 opacity-5 rotate-12 group-hover:scale-125 transition-transform duration-1000"><Zap size={220} /></div>
                             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-20">
                                 <div className="text-center md:text-left">
                                     <h3 className="label-caps text-orange-400 mb-4 opacity-80 text-[9px]">Simulation Control</h3>
                                     <p className="text-3xl lg:text-4xl font-black tracking-tight leading-none uppercase italic">Scale Ecosystem</p>
                                 </div>
-                                <div className="flex items-center gap-5 bg-white/5 p-4 rounded-[36px] border border-white/5 backdrop-blur-xl w-full md:w-auto">
-                                    <div className="flex-1 md:flex-none flex items-center px-8 border-r border-white/10">
-                                        <input type="number" value={globalGrowth} onChange={(e) => setGlobalGrowth(parseFloat(e.target.value))} className="w-24 bg-transparent text-center font-black text-5xl outline-none tabular-nums" />
-                                        <span className="font-black text-orange-400 text-3xl ml-3">%</span>
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-white/5 p-4 rounded-[36px] border border-white/5 backdrop-blur-xl w-full md:w-auto">
+                                    <div className="flex-1 md:flex-none flex items-center px-4 sm:px-8 border-b sm:border-b-0 sm:border-r border-white/10 pb-4 sm:pb-0">
+                                        <input type="number" value={globalGrowth} onChange={(e) => setGlobalGrowth(parseFloat(e.target.value))} className="w-24 bg-transparent text-center font-black text-3xl sm:text-5xl outline-none tabular-nums" />
+                                        <span className="font-black text-orange-400 text-2xl lg:text-3xl ml-3">%</span>
                                     </div>
-                                    <button onClick={applyGlobalGrowth} className="btn-premium btn-primary py-6 px-12 shadow-2xl text-xs">Execute Factor</button>
+                                    <button onClick={applyGlobalGrowth} className="btn-premium btn-primary py-3 px-6 sm:py-6 sm:px-12 shadow-2xl text-xs">Execute Factor</button>
                                 </div>
                             </div>
                         </div>
@@ -215,24 +215,23 @@ const GrowthSimulator = () => {
                                                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-60 leading-none">{m.help}</span>
                                                             </div>
                                                         </div>
-                                                        <div className="hidden md:block md:col-span-2 px-2">
-                                                            <input type="number" value={localData.current[m.key]} onChange={(e) => handleInputChange('current', m.key, e.target.value)} className="w-full bg-transparent border-none text-right font-black text-slate-300 outline-none tabular-nums text-lg" />
-                                                        </div>
-                                                                                                                                                        <div className="col-span-6 md:col-span-5 pl-8 border-l border-slate-100 flex justify-end">
-                                                                                                                                                            <div className="relative group flex items-center w-full max-w-[240px]">
-                                                                                                                                                                <input 
-                                                                                                                                                                    type="number" 
-                                                                                                                                                                    value={localData.target[m.key]} 
-                                                                                                                                                                    onChange={(e) => handleInputChange('target', m.key, e.target.value)} 
-                                                                                                                                                                    className="w-full bg-orange-50/30 border border-orange-100/30 py-4 pr-20 pl-5 rounded-[20px] text-right font-black text-slate-800 outline-none focus:ring-[8px] focus:ring-orange-50 focus:bg-white transition-all tabular-nums text-sm lg:text-base min-h-[56px]" 
-                                                                                                                                                                />
-                                                                                                                                                                {m.suffix && (
-                                                                                                                                                                    <span className="absolute right-10 top-1/2 -translate-y-1/2 text-[9px] font-black text-orange-400 uppercase tracking-[0.3em] pointer-events-none opacity-40">
-                                                                                                                                                                        {m.suffix}
-                                                                                                                                                                    </span>
-                                                                                                                                                                )}
-                                                                                                                                                            </div>
-                                                                                                                                                        </div>                                                    </div>
+                                                                                                                                                                                                                                                                                                                        <div className="hidden md:block md:col-span-2 px-2">
+                                                                                                                                                                                                                                                                                                                            <input type="number" value={localData.current[m.key] === 0 ? '' : localData.current[m.key]} onChange={(e) => handleInputChange('current', m.key, e.target.value)} className="w-full bg-transparent border-none text-right font-black text-slate-300 outline-none tabular-nums text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                        <div className="col-span-6 md:col-span-5 pl-8 border-l border-slate-100 flex justify-end">
+                                                                                                                                                                                                                                                                                                                            <div className="relative group flex items-center w-full max-w-[240px]">
+                                                                                                                                                                                                                                                                                                                                <input 
+                                                                                                                                                                                                                                                                                                                                    type="number" 
+                                                                                                                                                                                                                                                                                                                                    value={localData.target[m.key] === 0 ? '' : localData.target[m.key]} 
+                                                                                                                                                                                                                                                                                                                                    onChange={(e) => handleInputChange('target', m.key, e.target.value)} 
+                                                                                                                                                                                                                                                                                                                                    className="w-full bg-orange-50/30 border border-orange-100/30 py-4 pl-5 pr-12 rounded-[20px] text-right font-black text-slate-800 outline-none focus:ring-[8px] focus:ring-orange-50 focus:bg-white transition-all tabular-nums text-base min-h-[56px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                                                                                                                                                                                                                                                                                                                                />                                                                                                                                                                                                                                                                        {m.suffix && (
+                                                                                                                                                                                                                                                                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-orange-400 uppercase tracking-[0.3em] pointer-events-none opacity-40">
+                                                                                                                                                                                                                                                                                {m.suffix}
+                                                                                                                                                                                                                                                                            </span>
+                                                                                                                                                                                                                                                                        )}
+                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                </div>                                                    </div>
                                                 ))}
                             
                             <div className="bg-slate-900 text-white p-12 lg:p-20 grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 relative overflow-hidden">

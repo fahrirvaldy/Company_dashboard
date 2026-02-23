@@ -25,49 +25,51 @@ const KpiTable = ({ title, data, onUpdate, onAddRow }) => {
                 </button>
             </div>
 
-            {/* Table Grid Rendering */}
-            <div className="p-10 lg:p-16">
-                <div className="grid grid-cols-12 mb-8 px-12 label-caps opacity-40">
-                    <div className="col-span-5 flex items-center gap-4"><Flag size={12} /> Target Metric Objective</div>
-                    <div className="col-span-3 text-center">Baseline Target</div>
-                    <div className="col-span-3 text-center">Actual Realization</div>
-                    <div className="col-span-1 text-right">Status</div>
-                </div>
+            {/* Table Grid Rendering - Responsive Scrollable Area */}
+            <div className="p-10 lg:p-16 overflow-x-auto custom-scrollbar">
+                <div className="min-w-[850px]">
+                    <div className="flex items-center mb-10 px-8 py-4 bg-slate-50 rounded-2xl border border-slate-100 overflow-x-auto hide-scrollbar whitespace-nowrap gap-12 label-caps opacity-60">
+                        <div className="flex items-center gap-4 min-w-[300px] shrink-0"><Flag size={12} /> Target Metric Objective</div>
+                        <div className="w-[180px] text-center shrink-0">Baseline Target</div>
+                        <div className="w-[180px] text-center shrink-0">Actual Realization</div>
+                        <div className="flex-1 text-right shrink-0">Status</div>
+                    </div>
 
-                <div className="space-y-5">
-                    {data.map((row, idx) => (
-                        <div key={idx} className="grid grid-cols-12 items-center p-8 bg-slate-50/50 rounded-[40px] hover:bg-white hover:shadow-float transition-all duration-500 group border border-transparent hover:border-orange-100">
-                            <div className="col-span-5 pr-10">
-                                <input 
-                                    className="w-full bg-transparent font-black text-slate-800 text-lg tracking-tight border-none outline-none focus:text-orange-600 transition-colors uppercase leading-none mb-1"
-                                    value={row.kpi} 
-                                    onChange={(e) => onUpdate(idx, 'kpi', e.target.value)}
-                                />
-                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Strategic Operational KPI</p>
-                            </div>
-                            <div className="col-span-3 px-6">
-                                <div className="bg-white/80 p-4 rounded-[22px] border border-slate-100 shadow-sm transition-all group-hover:bg-white group-hover:shadow-md">
+                    <div className="space-y-5">
+                        {data.map((row, idx) => (
+                            <div key={idx} className="grid grid-cols-12 items-center p-8 bg-slate-50/50 rounded-[40px] hover:bg-white hover:shadow-float transition-all duration-500 group border border-transparent hover:border-orange-100">
+                                <div className="col-span-5 pr-10">
                                     <input 
-                                        className="w-full bg-transparent text-center font-black text-slate-600 text-sm outline-none tabular-nums"
-                                        value={row.target} 
-                                        onChange={(e) => onUpdate(idx, 'target', e.target.value)}
+                                        className="w-full bg-transparent font-black text-slate-800 text-lg tracking-tight border-none outline-none focus:text-orange-600 transition-colors uppercase leading-none mb-1"
+                                        value={row.kpi} 
+                                        onChange={(e) => onUpdate(idx, 'kpi', e.target.value)}
                                     />
+                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Strategic Operational KPI</p>
+                                </div>
+                                <div className="col-span-3 px-6">
+                                    <div className="bg-white/80 p-4 rounded-[22px] border border-slate-100 shadow-sm transition-all group-hover:bg-white group-hover:shadow-md">
+                                        <input 
+                                            className="w-full bg-transparent text-center font-black text-slate-600 text-sm outline-none tabular-nums"
+                                            value={row.target} 
+                                            onChange={(e) => onUpdate(idx, 'target', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-span-3 px-6">
+                                    <div className="bg-white/80 p-4 rounded-[22px] border border-slate-100 shadow-sm transition-all group-hover:bg-white group-hover:shadow-md group-hover:ring-4 group-hover:ring-orange-50">
+                                        <input 
+                                            className="w-full bg-transparent text-center font-black text-orange-500 text-base outline-none tabular-nums"
+                                            value={row.realisasi} 
+                                            onChange={(e) => onUpdate(idx, 'realisasi', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-span-1 flex justify-end">
+                                    <div className={`pill scale-125 shadow-xl transition-all active:scale-110 ${row.status === 'on' ? 'shadow-emerald-900/10' : 'shadow-rose-900/10'}`} onClick={() => onUpdate(idx, 'status', row.status === 'on' ? 'off' : 'on')} />
                                 </div>
                             </div>
-                            <div className="col-span-3 px-6">
-                                <div className="bg-white/80 p-4 rounded-[22px] border border-slate-100 shadow-sm transition-all group-hover:bg-white group-hover:shadow-md group-hover:ring-4 group-hover:ring-orange-50">
-                                    <input 
-                                        className="w-full bg-transparent text-center font-black text-orange-500 text-base outline-none tabular-nums"
-                                        value={row.realisasi} 
-                                        onChange={(e) => onUpdate(idx, 'realisasi', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-span-1 flex justify-end">
-                                <div className={`pill scale-125 shadow-xl transition-all active:scale-110 ${row.status === 'on' ? 'shadow-emerald-900/10' : 'shadow-rose-900/10'}`} onClick={() => onUpdate(idx, 'status', row.status === 'on' ? 'off' : 'on')} />
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 
