@@ -33,7 +33,7 @@ const Layout = () => {
                 <div className="flex items-center gap-4 mb-16 group cursor-pointer">
                     <img src={CompanyLogo} alt="Aksana Logo" className="w-11 h-11 rounded-xl object-cover shadow-lg shadow-orange-900/10 transition-transform group-hover:rotate-12 duration-300" />
                     <div>
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tighter leading-none uppercase">ANGKASA</h1>
+                        <h1 className="text-2xl font-black text-slate-800 tracking-tighter leading-none uppercase">AKSANA</h1>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Enterprise</p>
                     </div>
                 </div>
@@ -67,7 +67,7 @@ const Layout = () => {
                 <header className={`lg:hidden flex items-center justify-between px-6 py-5 bg-white transition-all duration-300 z-[60] ${scrolled ? 'shadow-lg py-4' : 'border-b border-slate-50'}`}>
                     <div className="flex items-center gap-3">
                         <img src={CompanyLogo} alt="Aksana Logo" className="w-9 h-9 rounded-lg object-cover shadow-lg shadow-orange-900/10" />
-                        <span className="font-black text-slate-800 tracking-tighter text-base uppercase">ANGKASA</span>
+                        <span className="font-black text-slate-800 tracking-tighter text-base uppercase">AKSANA</span>
                     </div>
                     <button 
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -91,7 +91,7 @@ const Layout = () => {
                 <aside className={`w-[80%] max-w-[320px] bg-white h-full p-10 flex flex-col shadow-2xl transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`} onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-4 mb-16">
                         <img src={CompanyLogo} alt="Aksana Logo" className="w-11 h-11 rounded-xl object-cover shadow-xl shadow-orange-900/10" />
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">ANGKASA</h1>
+                        <h1 className="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">AKSANA</h1>
                     </div>
                     <nav className="space-y-4">
                         {navItems.map((item) => (

@@ -9,7 +9,7 @@ const GrowthSimulator = lazy(() => import('./pages/GrowthSimulator'));
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="flex justify-center items-center h-screen font-black text-[#FF8c42] text-2xl animate-pulse tracking-tighter">ANGKASA</div>}>
+      <Suspense fallback={<div className="flex justify-center items-center h-screen font-black text-[#FF8c42] text-2xl animate-pulse tracking-tighter">AKSANA</div>}>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />

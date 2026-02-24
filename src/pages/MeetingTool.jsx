@@ -124,7 +124,7 @@ const MeetingTool = () => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Angkasa_Report_${localData.date.replace(/\s/g, '_')}.pdf`;
+            link.download = `Aksana_Report_${localData.date.replace(/\s/g, '_')}.pdf`;
             link.click();
             URL.revokeObjectURL(url);
             
@@ -209,7 +209,7 @@ const MeetingTool = () => {
                 {activeSection === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-center max-w-5xl mx-auto py-20 lg:py-0">
                          <div className="mb-10 lg:mb-16">
-                            <h1 className="text-5xl lg:text-[120px] font-black text-slate-900 tracking-tighter uppercase leading-[0.8] italic mb-6">ANGKASA</h1>
+                            <h1 className="text-5xl lg:text-[120px] font-black text-slate-900 tracking-tighter uppercase leading-[0.8] italic mb-6">AKSANA</h1>
                             <h2 className="text-2xl lg:text-4xl font-black text-[#FF8c42] uppercase tracking-[0.2em]">WEEKLY REVIEW</h2>
                          </div>
                          <div className="w-full max-w-2xl bg-white p-2 rounded-[40px] shadow-float ring-1 ring-slate-100">

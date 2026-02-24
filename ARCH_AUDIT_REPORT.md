@@ -1,6 +1,6 @@
 ## Architecture Audit & Risk Assessment Report
 
-This report provides an in-depth audit of the Angkasa Company Dashboard repository, focusing on scalability, architecture, and potential risks.
+This report provides an in-depth audit of the Aksana Company Dashboard repository, focusing on scalability, architecture, and potential risks.
 
 ### 1. State Management & Data Flow
 

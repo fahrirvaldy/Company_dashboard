@@ -1,5 +1,5 @@
 // Hardened Ecosystem API with Validation and Sync
-const STORAGE_KEY = 'Angkasa_Ecosystem_Data';
+const STORAGE_KEY = 'Aksana_Ecosystem_Data';
 
 const getStoredData = () => {
     try {

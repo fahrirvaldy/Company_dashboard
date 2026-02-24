@@ -87,7 +87,7 @@ const MeetingPDFReport = ({ data, chartImages }) => (
     <Page size="A4" style={styles.page}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Angkasa Executive Report</Text>
+        <Text style={styles.title}>Aksana Executive Report</Text>
         <Text style={styles.subtitle}>Weekly Review: {data.date}</Text>
       </View>
 

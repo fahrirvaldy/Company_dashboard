@@ -65,16 +65,16 @@ const Dashboard = () => {
     if (isLoadingMetrics || isLoadingChart || isLoadingSku) return <div className="p-12 text-center animate-pulse"><p className="label-caps">Initializing ecosystem...</p></div>;
 
     return (
-        <div className="flex flex-col gap-8 animate-in mt-4 lg:mt-20 px-6 lg:px-0">
+        <div className="flex flex-col gap-6 animate-in mt-2 lg:mt-6 px-6 lg:px-0">
             {/* Header Section */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-6">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
                         <span className="label-caps text-orange-500">Live Enterprise Overview</span>
                     </div>
                     <h2 className="heading-lg tracking-tighter">Executive Dashboard</h2>
-                    <p className="text-body-muted mt-1 opacity-70">Aggregated performance intelligence across Angkasa ecosystem</p>
+                    <p className="text-body-muted mt-1 opacity-70">Aggregated performance intelligence across Aksana ecosystem</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white p-3 rounded-[24px] border border-slate-100 shadow-soft">
                     <div className="px-6 py-1">
@@ -145,51 +145,51 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Metrics Grid */}
+            {/* Metrics Grid - Moderately Compact */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                <Card title="Gross Merchandise Value" value={formatCurrency(metrics?.gmv)} trend={2.5} icon={<DollarSign size={20} />} />
+                <Card title="Gross Merchandise Value" value={formatCurrency(metrics?.gmv)} trend={2.5} icon={<DollarSign size={18} />} />
                 <Card title="Net Ecosystem Sales" value={formatCurrency(metrics?.netSales)} trend={1.8} />
-                <Card title="Realized Net Profit" value={formatCurrency(metrics?.profit)} trend={5.2} icon={<TrendingUp size={20} />} />
-                <Card title="Inventory Distribution" value={metrics?.soldItems?.toLocaleString()} subtext="Units Sold" icon={<Package size={20} />} />
+                <Card title="Realized Net Profit" value={formatCurrency(metrics?.profit)} trend={5.2} icon={<TrendingUp size={18} />} />
+                <Card title="Inventory Distribution" value={metrics?.soldItems?.toLocaleString()} subtext="Units Sold" icon={<Package size={18} />} />
                 <Card title="Average Market Discount" value={`${metrics?.discountRate}%`} subtext="Pricing Efficiency" />
                 <Card title="Operational Return Rate" value={`${metrics?.returnRate}%`} subtext="Customer Satisfaction" />
             </div>
 
-            {/* Main Interactive Grid - High Fidelity Scaling & Balanced Ratios */}
+            {/* Main Interactive Grid - Precision Balanced */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
                 <div className="lg:col-span-4 flex flex-col gap-6 lg:gap-8">
                     {/* AI Smart Reporter */}
-                    <div className="card-premium bg-gradient-to-br from-white to-orange-50/30 rounded-[36px] flex-1 p-6 lg:p-8">
-                        <h3 className="heading-md mb-5 flex items-center gap-3">
+                    <div className="card-premium bg-gradient-to-br from-white to-orange-50/30 rounded-[32px] flex-1 p-6 lg:p-8">
+                        <h3 className="heading-md mb-4 flex items-center gap-3">
                             <span className="text-xl">✨</span> AI Smart Sync
                         </h3>
                         <textarea
-                            className="input-premium min-h-[130px] resize-none mb-5 text-sm"
+                            className="input-premium min-h-[110px] resize-none mb-4 text-xs"
                             placeholder="Input performance report summary..."
                             value={reportText}
                             onChange={(e) => setReportText(e.target.value)}
                         />
-                        <button className="btn-premium btn-primary w-full shadow-2xl py-3.5" onClick={handleAiReport}>
-                            <Send size={14} /> Execute Sync
+                        <button className="btn-premium btn-primary w-full shadow-xl py-3 text-[9px]" onClick={handleAiReport}>
+                            <Send size={12} /> Execute Sync
                         </button>
-                        {aiMessage && <div className="mt-4 p-3 rounded-[16px] bg-white border border-dashed border-emerald-200 text-center label-caps text-emerald-600 animate-in">{aiMessage}</div>}
+                        {aiMessage && <div className="mt-3 p-3 rounded-[16px] bg-white border border-dashed border-emerald-200 text-center label-caps text-emerald-600 animate-in text-[8px]">{aiMessage}</div>}
                     </div>
 
-                    {/* Quick SKU View - Proportional High Fidelity Scaling */}
-                    <div className="card-premium rounded-[36px] shrink-0 p-8 lg:p-10">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="label-caps">Stock Integrity Monitor</h3>
-                            <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-3 py-1 rounded-lg tracking-widest">LIVE</span>
+                    {/* Quick SKU View - Compact High Fidelity */}
+                    <div className="card-premium rounded-[32px] shrink-0 p-6 lg:p-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="label-caps text-[9px]">Stock Integrity Monitor</h3>
+                            <span className="text-[8px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md tracking-widest">LIVE</span>
                         </div>
-                        <div className="space-y-8">
+                        <div className="space-y-5">
                             {skuData?.slice(0, 4).map((item) => (
-                                <div key={item.sku} className="flex items-start justify-between group cursor-default border-b border-slate-50 pb-6 last:border-none last:pb-0 gap-4">
+                                <div key={item.sku} className="flex items-start justify-between group cursor-default border-b border-slate-50 pb-4 last:border-none last:pb-0 gap-4">
                                     <div className="min-w-0 flex-1">
-                                        <p className="label-caps text-[8.5px] mb-2 group-hover:text-orange-500 transition-colors tracking-[0.4em]">{item.sku}</p>
-                                        <p className="text-base font-black text-slate-800 tracking-tight uppercase leading-snug whitespace-normal break-words">{item.name}</p>
+                                        <p className="label-caps text-[7.5px] mb-1 group-hover:text-orange-500 transition-colors tracking-[0.4em]">{item.sku}</p>
+                                        <p className="text-sm font-black text-slate-800 tracking-tight uppercase leading-snug whitespace-normal break-words">{item.name}</p>
                                     </div>
-                                    <div className="flex items-center gap-6 shrink-0 pt-1">
-                                        <span className="text-2xl font-black text-slate-900 tabular-nums tracking-tighter leading-none">{item.stock}</span>
+                                    <div className="flex items-center gap-4 shrink-0 pt-1">
+                                        <span className="text-xl font-black text-slate-900 tabular-nums tracking-tighter leading-none">{item.stock}</span>
                                         <div className={`w-2 h-2 rounded-full shadow-lg ${item.status === 'Critical' ? 'bg-rose-500 shadow-rose-200' : item.status === 'Low' ? 'bg-amber-400 shadow-amber-200' : 'bg-emerald-400 shadow-emerald-200'}`} />
                                     </div>
                                 </div>
@@ -198,20 +198,20 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Sales Velocity Chart - Hero Proportions */}
-                <div className="lg:col-span-8 card-premium flex flex-col min-h-[420px] rounded-[32px] p-6 lg:p-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <h3 className="label-caps text-[8px]">Enterprise Ecosystem Sales Velocity (Weekly Aggregate)</h3>
-                        <div className="flex items-center gap-6">
+                {/* Sales Velocity Chart - Hero Proportions Compact */}
+                <div className="lg:col-span-8 card-premium flex flex-col min-h-[320px] rounded-[32px] p-6 lg:p-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="label-caps text-[8px]">Ecosystem Sales Velocity (Weekly)</h3>
+                        <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-xl shadow-orange-900/20"></div>
-                                <span className="label-caps opacity-60">Gross Ecosystem Sales</span>
+                                <span className="label-caps opacity-60 text-[7px]">Gross Sales</span>
                             </div>
                         </div>
                     </div>
                     <div className="flex-1 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#FF8c42" stopOpacity={0.3} />
@@ -219,40 +219,40 @@ const Dashboard = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 900, fill: '#94a3b8', textTransform: 'uppercase'}} dy={10} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 900, fill: '#94a3b8', textTransform: 'uppercase'}} dy={10} />
                                 <YAxis hide />
                                 <Tooltip 
-                                    contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 30px 50px -12px rgba(0,0,0,0.15)', padding: '20px'}}
-                                    itemStyle={{fontWeight: 900, color: '#0F172A', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.1em'}}
+                                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px'}}
+                                    itemStyle={{fontWeight: 900, color: '#0F172A', textTransform: 'uppercase', fontSize: '9px', letterSpacing: '0.1em'}}
                                 />
-                                <Area type="monotone" dataKey="sales" stroke="#FF8c42" strokeWidth={5} fillOpacity={1} fill="url(#colorSales)" dot={{r: 6, fill: '#fff', stroke: '#FF8c42', strokeWidth: 4}} activeDot={{r: 10, strokeWidth: 0, shadowBlur: 20, shadowColor: 'rgba(255,140,66,0.5)'}} />
+                                <Area type="monotone" dataKey="sales" stroke="#FF8c42" strokeWidth={4} fillOpacity={1} fill="url(#colorSales)" dot={{r: 5, fill: '#fff', stroke: '#FF8c42', strokeWidth: 3}} activeDot={{r: 8, strokeWidth: 0, shadowBlur: 15, shadowColor: 'rgba(255,140,66,0.4)'}} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
             </div>
 
-            {/* Manual Override - High Fidelity High Contrast Scaling */}
-            <div className="card-premium bg-slate-50/50 border-dashed border-slate-200 rounded-[48px] p-12 lg:p-16">
-                <div className="flex items-center gap-5 mb-12">
-                    <div className="w-14 h-14 bg-white rounded-3xl flex items-center justify-center shadow-soft border border-slate-100">
-                        <Edit size={24} className="text-orange-500" />
+            {/* Manual Override - High Fidelity Compact Scaling */}
+            <div className="card-premium bg-slate-50/50 border-dashed border-slate-200 rounded-[32px] p-8 lg:p-10">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-soft border border-slate-100">
+                        <Edit size={20} className="text-orange-500" />
                     </div>
                     <div>
-                        <h3 className="heading-lg tracking-tighter uppercase leading-none text-slate-900">Manual Intelligence Override</h3>
-                        <p className="text-body-muted mt-2 uppercase tracking-widest opacity-60">Direct ecosystem state modification</p>
+                        <h3 className="heading-md tracking-tight uppercase leading-none text-slate-900">Manual Intelligence Override</h3>
+                        <p className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mt-1.5 opacity-60">Direct ecosystem state modification</p>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                     {Object.keys(manualInputs).map((key) => (
-                        <div key={key} className="space-y-4">
-                            <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] block ml-2">
+                        <div key={key} className="space-y-3">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] block ml-1">
                                 {key.replace(/([A-Z])/g, ' $1')}
                             </label>
                             <input 
                                 type="number" 
                                 name={key} 
-                                className="w-full px-8 py-8 lg:py-10 bg-white border border-slate-100 rounded-[32px] text-xl font-black text-slate-800 tabular-nums shadow-soft focus:ring-[16px] focus:ring-orange-50 focus:border-orange-400 outline-none transition-all placeholder:text-slate-200 min-h-[80px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                                className="w-full px-5 py-4 lg:py-5 bg-white border border-slate-100 rounded-[16px] text-lg font-black text-slate-800 tabular-nums shadow-soft focus:ring-[10px] focus:ring-orange-50 focus:border-orange-400 outline-none transition-all placeholder:text-slate-200 min-h-[60px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
                                 placeholder={metrics?.[key]?.toString() || '0'} 
                                 value={manualInputs[key]} 
                                 onChange={(e) => setManualInputs(p => ({...p, [e.target.name]: e.target.value}))} 
@@ -260,8 +260,8 @@ const Dashboard = () => {
                         </div>
                     ))}
                 </div>
-                <div className="flex justify-end mt-16">
-                    <button onClick={handleManualUpdate} className="btn-premium btn-primary shadow-2xl px-16 py-6 text-sm">
+                <div className="flex justify-end mt-10">
+                    <button onClick={handleManualUpdate} className="btn-premium btn-primary shadow-lg px-10 py-4 text-[9px]">
                         Apply Structural Changes
                     </button>
                 </div>

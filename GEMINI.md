@@ -1,33 +1,62 @@
-# GEMINI.md
+# Aksana Company Dashboard - Context & Instructions
 
-This file provides a comprehensive overview of the **Company Dashboard** project, designed to serve as a quick-start guide and instructional context for Gemini AI.
+This document provides essential context and instructions for AI agents interacting with the Aksana Company Dashboard codebase.
 
-## Project Overview
+## 1. Project Overview
+**Aksana** (formerly Angkasa) is a high-fidelity enterprise dashboard designed for executive business intelligence and operational management.
 
-This is a web application built with **React** and **Vite**. It appears to be a company dashboard with different sections for data visualization and tools.
+### Main Technologies
+- **Framework**: React 19 (Vite-based)
+- **State Management**: TanStack Query (React Query) v5
+- **Persistence**: Unified `localStorage` layer (`Aksana_Ecosystem_Data`)
+- **Styling**: Tailwind CSS v4 (PostCSS)
+- **Data Visualization**: Recharts (Dashboard) and Chart.js (Simulator)
+- **Reporting**: Vector-based PDF generation via `@react-pdf/renderer`
+- **Icons**: Lucide React
 
-*   **Framework**: [React](https://react.dev/)
-*   **Build Tool**: [Vite](https://vitejs.dev/)
-*   **Routing**: [React Router](https://reactrouter.com/)
-*   **Charting**: [Recharts](https://recharts.org/)
-*   **Icons**: [Lucide React](https://lucide.dev/)
-*   **Linting**: [ESLint](https://eslint.org/)
+### Key Features
+- **Executive Dashboard**: Real-time KPI monitoring, AI-assisted performance syncing, and stock integrity monitoring.
+- **Meeting Tool**: A comprehensive workspace for Weekly Reviews, featuring attendance ledgers, KPI trackers, Rocks review, and a structured IDT (Identify, Discuss, Tuntas) session.
+- **Growth Simulator**: A high-fidelity 5-Ways financial modeling tool with interactive variable impact analysis.
 
-The application is structured with a main layout component (`src/components/Layout.jsx`) and separate pages for different sections like `Dashboard` and `Tools`.
+## 2. Architecture & Data Flow
+The application operates as a "local-first" ecosystem with a centralized API layer.
 
-## Building and Running
+### Unified API Layer (`src/api/dashboardApi.js`)
+- All tools read from and write to a single source of truth in `localStorage`.
+- **Structural Sync**: Changes in one tool can impact others (e.g., updating simulator variables automatically recalculates Dashboard Profit).
+- **Custom Event Sync**: Dispatches `ecosystem_sync` on storage updates to keep components reactive across the app.
 
-The following scripts are available in `package.json` to build and run the application:
+### Component Design Pattern
+- **Local State + Manual Save**: Heavy input components (Meeting Tool, Simulator) use local state for fluid typing, with a dedicated "Save/Sync" button to persist changes to the global ecosystem. This prevents performance lag and race conditions.
 
-*   **`npm install`**: Installs all the necessary dependencies.
-*   **`npm run dev`**: Starts the development server with Hot Module Replacement (HMR). The application will be available at `http://localhost:5173` by default.
-*   **`npm run build`**: Bundles the application for production. The output is generated in the `dist` directory.
-*   **`npm run preview`**: Starts a local server to preview the production build.
-*   **`npm run lint`**: Lints the codebase using ESLint to check for code quality and style issues.
+## 3. Building and Running
+The project follows standard Vite/NPM workflows:
 
-## Development Conventions
+- **Development**: `npm run dev`
+- **Build**: `npm run build`
+- **Preview Build**: `npm run preview`
+- **Linting**: `npm run lint`
 
-*   **Component-Based Architecture**: The project follows a component-based architecture, with reusable components in `src/components` and page-level components in `src/pages`.
-*   **File Naming**: Components and pages use PascalCase (e.g., `Dashboard.jsx`, `Card.jsx`).
-*   **Routing**: Routing is handled by React Router in `src/App.jsx`, with nested routes for different pages.
-*   **Styling**: The project uses CSS files (`App.css`, `index.css`) for styling.
+## 4. Development Conventions & Styling
+
+### Global UI Scaling
+- A **Global UI Scaling (75%)** is implemented in `src/index.css` for desktop screens (>= 1024px) via root font-size manipulation. This ensures high data density on professional monitors while maintaining accessibility on mobile.
+
+### Branding & Theme
+- **Corporate Identity**: Aksana Custom Branding.
+- **Colors**: Dark Turquoise (`#095546`) for primary text/borders, Aksana Orange (`#ffa724`) for accents.
+- **Typography**: 
+    - Web App: `Plus Jakarta Sans`
+    - PDF Reports: `Nunito Sans` (Vector text)
+
+### Layout System
+- **Responsive Navigation**: Features a persistent desktop sidebar and a responsive top header/drawer for mobile.
+- **Container Strategy**: Main content is wrapped in a centered `max-w-[1440px]` container with professional horizontal padding (`px-8 lg:px-16`).
+
+### PDF Reporting
+- Templates are defined in `src/components/MeetingPDFReport.jsx`.
+- Always use **Direct TTF URLs** from Fontsource for font registration to avoid rendering crashes.
+
+## 5. Deployment Note
+The application is designed to be fully functional as a static build, relying on browser storage for all persistence.
