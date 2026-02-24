@@ -20,6 +20,8 @@ const MeetingTool = () => {
     const [activeSection, setActiveSection] = useState(0);
     const [localData, setLocalData] = useState(null);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const pdfRef = useRef(null);
     
     const { data: meetingData, isLoading } = useQuery({ queryKey: ['meetingData'], queryFn: fetchMeetingData });
@@ -46,7 +48,17 @@ const MeetingTool = () => {
         }
     });
 
-    const handleSave = () => { if (localData) mutation.mutate(localData); };
+    const handleSave = async () => { 
+        if (!localData || isSaving) return;
+        setIsSaving(true);
+        try {
+            await mutation.mutateAsync(localData);
+        } catch (error) {
+            console.error("Save failed:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const targetProfit = useMemo(() => {
         if (!growthData?.target) return 0;
@@ -110,14 +122,14 @@ const MeetingTool = () => {
     })();
 
     const exportToPDF = async () => {
+        if (isExporting) return;
+        setIsExporting(true);
         try {
             const toast = document.createElement('div');
             toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-10 py-5 rounded-[24px] shadow-float z-[100] font-black text-[10px] uppercase tracking-[0.3em] animate-in border border-white/10 backdrop-blur-xl";
             toast.innerText = "⚡ Generating High-Fidelity Vector PDF...";
             document.body.appendChild(toast);
 
-            // In a real scenario, you'd pull Base64 from Chart.js instances if they existed here
-            // const chartImages = { waterfall: waterfallInstance.toBase64Image() };
             const chartImages = {}; 
 
             const blob = await pdf(<MeetingPDFReport data={localData} chartImages={chartImages} />).toBlob();
@@ -128,10 +140,12 @@ const MeetingTool = () => {
             link.click();
             URL.revokeObjectURL(url);
             
-            toast.innerText = "✓ Report Exported Successfully";
+            toast.innerText = "✓ DATA SYNCED TO CLOUD";
             setTimeout(() => toast.remove(), 2000);
         } catch (error) {
             console.error('PDF Generation Failed:', error);
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -184,12 +198,13 @@ const MeetingTool = () => {
                 </nav>
                 
                 <div className="hidden lg:flex p-8 border-t border-white/5 gap-3 flex-col">
-                    <button onClick={handleSave} disabled={mutation.isPending} className="btn-premium btn-primary w-full py-4 flex items-center justify-center gap-3 active:scale-95 transition-transform">
-                        {mutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                        {mutation.isPending ? 'Syncing...' : 'Save Workspace'}
+                    <button onClick={handleSave} disabled={isSaving} className="btn-premium btn-primary w-full py-4 flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-50">
+                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        {isSaving ? 'SAVING TO CLOUD...' : 'SAVE WORKSPACE'}
                     </button>
-                    <button onClick={exportToPDF} className="w-full px-6 py-4 bg-white/5 rounded-[20px] font-bold text-[10px] uppercase tracking-widest text-slate-400 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                        <Printer size={16} /> Export to PDF
+                    <button onClick={exportToPDF} disabled={isExporting} className="w-full px-6 py-4 bg-white/5 rounded-[20px] font-bold text-[10px] uppercase tracking-widest text-slate-400 hover:bg-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                        {isExporting ? <Loader2 className="animate-spin" size={16} /> : <Printer size={16} />}
+                        {isExporting ? 'GENERATING PDF...' : 'Export to PDF'}
                     </button>
                 </div>
 
@@ -200,7 +215,9 @@ const MeetingTool = () => {
                         <p className="text-[10px] font-black uppercase text-white tracking-[0.2em] opacity-80">{navItems[activeSection].label}</p>
                     </div>
                     <button onClick={() => setActiveSection(s => Math.min(navItems.length-1, s+1))} className="p-2 text-white/40 active:scale-90 transition-transform"><ChevronRight size={24}/></button>
-                    <button onClick={handleSave} className="ml-4 p-3 bg-[#FF8c42] rounded-2xl text-white shadow-xl active:scale-90 transition-transform"><Save size={20}/></button>
+                    <button onClick={handleSave} disabled={isSaving} className="ml-4 p-3 bg-[#FF8c42] rounded-2xl text-white shadow-xl active:scale-90 transition-transform disabled:opacity-50">
+                        {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                    </button>
                 </div>
             </aside>
 
@@ -358,29 +375,32 @@ const MeetingTool = () => {
                             actionItems={localData.actionItems}
                             onPullIssues={() => {
                                 const newIssues = [];
-                                // Pull from Division Tables
-                                ['ecommTable','hcgaTable','liveTable','salesTable','creativeTable','prodTable','warehouseTable'].forEach(t => {
-                                    localData[t]?.forEach(row => { 
-                                        if (row.status === 'off') {
-                                            const label = `[${t.replace('Table','').toUpperCase()}] ${row.kpi}`;
-                                            if (!localData.idtIssues.includes(label)) newIssues.push(label);
+                                // Hardened Pull Logic with Optional Chaining and Duplicate Prevention
+                                const tables = ['ecommTable','hcgaTable','liveTable','salesTable','creativeTable','prodTable','warehouseTable'];
+                                
+                                tables.forEach(t => {
+                                    localData?.[t]?.forEach(row => { 
+                                        if (row?.status === 'off') {
+                                            const label = `[${t.replace('Table','').toUpperCase()}] ${row?.kpi || 'Unknown Metric'}`;
+                                            if (!localData?.idtIssues?.includes(label)) newIssues.push(label);
                                         } 
                                     });
                                 });
-                                // Pull from Strategic Rocks
-                                localData.rocksTable?.forEach(r => { 
-                                    if (r.status === 'off') {
-                                        const label = `[ROCK] ${r.goal}`;
-                                        if (!localData.idtIssues.includes(label)) newIssues.push(label);
+
+                                // Strategic Rocks Pull
+                                localData?.rocksTable?.forEach(r => { 
+                                    if (r?.status === 'off') {
+                                        const label = `[ROCK] ${r?.goal || 'Unnamed Objective'}`;
+                                        if (!localData?.idtIssues?.includes(label)) newIssues.push(label);
                                     } 
                                 });
 
                                 if (newIssues.length > 0) {
-                                    updateNested('idtIssues', [...localData.idtIssues, ...newIssues]);
+                                    updateNested('idtIssues', [...(localData?.idtIssues || []), ...newIssues]);
                                     // Feedback Toast
                                     const toast = document.createElement('div');
                                     toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl z-[100] font-black text-[10px] uppercase tracking-widest animate-in";
-                                    toast.innerText = `✓ PULLED ${newIssues.length} OFF-TRACK ISSUES`;
+                                    toast.innerText = `✓ PULLED ${newIssues.length} STRATEGIC ISSUES`;
                                     document.body.appendChild(toast);
                                     setTimeout(() => toast.remove(), 2000);
                                 }

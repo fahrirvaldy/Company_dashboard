@@ -11,6 +11,7 @@ const GrowthSimulator = () => {
     const [globalGrowth, setGlobalGrowth] = useState(10);
     const [localData, setLocalData] = useState(null);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const comparisonChartRef = useRef(null);
     const waterfallChartRef = useRef(null);
@@ -46,6 +47,24 @@ const GrowthSimulator = () => {
         setLocalData(newData);
     };
 
+    const handleSync = async () => {
+        if (!localData || isSaving) return;
+        setIsSaving(true);
+        try {
+            await mutation.mutateAsync(localData);
+            // Global Success Toast
+            const toast = document.createElement('div');
+            toast.className = "fixed top-10 right-10 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl z-[100] font-black text-xs uppercase animate-in border border-white/10";
+            toast.innerText = "✓ DATA SYNCED TO CLOUD";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        } catch (error) {
+            console.error("Sync failed:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const applyGlobalGrowth = () => {
         const multiplier = 1 + globalGrowth / 100;
         const newData = { ...localData };
@@ -58,28 +77,47 @@ const GrowthSimulator = () => {
     const results = useMemo(() => {
         if (!localData) return null;
         const calc = (d) => {
-            const cust = Math.floor(d.leads * (d.conv / 100));
-            const rev = cust * d.trans * d.sale;
-            const profit = rev * (d.margin / 100);
+            const leads = parseFloat(d.leads) || 0;
+            const conv = parseFloat(d.conv) || 0;
+            const trans = parseFloat(d.trans) || 0;
+            const sale = parseFloat(d.sale) || 0;
+            const margin = parseFloat(d.margin) || 0;
+
+            const cust = Math.floor(leads * (conv / 100));
+            const rev = cust * trans * sale;
+            const profit = rev * (margin / 100);
             return { cust, rev, profit };
         };
         const current = calc(localData.current);
         const target = calc(localData.target);
-        const growth = current.profit > 0 ? ((target.profit - current.profit) / current.profit) * 100 : 0;
-        return { current, target, growth };
+        
+        // Hardened Growth Logic
+        const growth = (current.profit > 0 && isFinite(current.profit)) 
+            ? ((target.profit - current.profit) / current.profit) * 100 
+            : 0;
+            
+        return { current, target, growth: isFinite(growth) ? growth : 0 };
     }, [localData]);
 
     const waterfallData = useMemo(() => {
         if (!localData || !results) return [];
         const { current: c, target: t } = localData;
-        const calc = (leads, conv, trans, sale, margin) => Math.floor(leads * (conv / 100)) * trans * sale * (margin / 100);
         
-        const base = results.current.profit;
+        const calc = (leads, conv, trans, sale, margin) => {
+            const l = parseFloat(leads) || 0;
+            const co = parseFloat(conv) || 0;
+            const tr = parseFloat(trans) || 0;
+            const sa = parseFloat(sale) || 0;
+            const ma = parseFloat(margin) || 0;
+            return Math.floor(l * (co / 100)) * tr * sa * (ma / 100);
+        };
+        
+        const base = results.current.profit || 0;
         const step1 = calc(t.leads, c.conv, c.trans, c.sale, c.margin);
         const step2 = calc(t.leads, t.conv, c.trans, c.sale, c.margin);
         const step3 = calc(t.leads, t.conv, t.trans, c.sale, c.margin);
         const step4 = calc(t.leads, t.conv, t.trans, t.sale, c.margin);
-        const final = results.target.profit;
+        const final = results.target.profit || 0;
 
         return [
             { label: 'Baseline', val: [0, base], diff: base },
@@ -166,9 +204,9 @@ const GrowthSimulator = () => {
                             <button onClick={() => setCurrency('IDR')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'IDR' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>IDR</button>
                             <button onClick={() => setCurrency('USD')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all duration-300 ${currency === 'USD' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>USD</button>
                         </div>
-                        <button onClick={() => mutation.mutate(localData)} disabled={mutation.isPending} className="flex-1 md:flex-none btn-premium btn-primary py-3 px-4 md:py-5 md:px-10 shadow-2xl active:scale-95 transition-all">
-                            {mutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                            Sync Simulator Analytics
+                        <button onClick={handleSync} disabled={isSaving} className="flex-1 md:flex-none btn-premium btn-primary py-3 px-4 md:py-5 md:px-10 shadow-2xl active:scale-95 transition-all disabled:opacity-50">
+                            {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                            {isSaving ? 'SYNCING TO CLOUD...' : 'Sync Simulator Analytics'}
                         </button>
                     </div>
                 </header>

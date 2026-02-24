@@ -1,25 +1,22 @@
-// Hardened Ecosystem API with Validation and Sync
-const STORAGE_KEY = 'Aksana_Ecosystem_Data';
+import { db } from './firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
-const getStoredData = () => {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-        console.error("Critical: Storage Parse Failure", e);
-        return null;
-    }
-};
+const DOC_PATH = ['aksana_data', 'main_ecosystem'];
+const docRef = doc(db, ...DOC_PATH);
 
-const setStoredData = (data) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        // Trigger a custom event for cross-tab or cross-component sync
-        window.dispatchEvent(new Event('ecosystem_sync'));
-    } catch (e) {
-        console.error("Critical: Storage Save Failure", e);
+// In-memory cache for immediate access, updated by subscription
+let ecosystemCache = null;
+
+// Initialize Real-time Subscription
+onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+        ecosystemCache = docSnap.data();
+        window.dispatchEvent(new CustomEvent('ecosystem_sync', { detail: ecosystemCache }));
+    } else {
+        // Initialize if empty
+        setDoc(docRef, DEFAULT_ECOSYSTEM_STATE);
     }
-};
+});
 
 const DEFAULT_ECOSYSTEM_STATE = {
     metrics: {
@@ -82,19 +79,23 @@ const DEFAULT_ECOSYSTEM_STATE = {
     ]
 };
 
-// Initialize if empty
-if (!getStoredData()) setStoredData(DEFAULT_ECOSYSTEM_STATE);
+const getStoredData = async () => {
+    if (ecosystemCache) return ecosystemCache;
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : DEFAULT_ECOSYSTEM_STATE;
+};
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const setStoredData = async (data) => {
+    await setDoc(docRef, data, { merge: true });
+};
 
 export const fetchDashboardMetrics = async () => {
-    await sleep(150);
-    return getStoredData().metrics;
+    const data = await getStoredData();
+    return data.metrics;
 };
 
 export const updateDashboardMetrics = async (newMetrics) => {
-    await sleep(150);
-    const data = getStoredData();
+    const data = await getStoredData();
     // Sanitize and Merge
     Object.keys(newMetrics).forEach(key => {
         const val = parseFloat(newMetrics[key]);
@@ -106,41 +107,39 @@ export const updateDashboardMetrics = async (newMetrics) => {
         data.chartData[data.chartData.length - 1].sales = parseFloat(newMetrics.netSales);
     }
     
-    setStoredData(data);
+    await setStoredData(data);
     return data.metrics;
 };
 
 export const fetchSalesChartData = async () => {
-    await sleep(200);
-    return getStoredData().chartData;
+    const data = await getStoredData();
+    return data.chartData;
 };
 
 export const fetchSkuData = async () => {
-    await sleep(100);
-    return getStoredData().skuData;
+    const data = await getStoredData();
+    return data.skuData;
 };
 
 export const fetchMeetingData = async () => {
-    await sleep(150);
-    return getStoredData().meeting;
+    const data = await getStoredData();
+    return data.meeting;
 };
 
 export const saveMeetingData = async (newMeetingData) => {
-    await sleep(300);
-    const data = getStoredData();
+    const data = await getStoredData();
     data.meeting = newMeetingData;
-    setStoredData(data);
+    await setStoredData(data);
     return data.meeting;
 };
 
 export const fetchGrowthData = async () => {
-    await sleep(150);
-    return getStoredData().simulator;
+    const data = await getStoredData();
+    return data.simulator;
 };
 
 export const saveGrowthData = async (newSimData) => {
-    await sleep(300);
-    const data = getStoredData();
+    const data = await getStoredData();
     data.simulator = newSimData;
     
     // Structural Sync: Simulator results impact Dashboard Profit
@@ -148,13 +147,14 @@ export const saveGrowthData = async (newSimData) => {
     const calculatedProfit = Math.round(Math.floor(c.leads * (c.conv / 100)) * c.trans * c.sale * (c.margin / 100));
     data.metrics.profit = calculatedProfit;
     
-    setStoredData(data);
+    await setStoredData(data);
     return data.simulator;
 };
 
 export const resetSystem = async () => {
     if (window.confirm("This will permanently reset all business data to factory defaults. Continue?")) {
-        localStorage.removeItem(STORAGE_KEY);
+        await setDoc(docRef, DEFAULT_ECOSYSTEM_STATE);
         window.location.reload();
     }
 };
+

@@ -145,17 +145,17 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Metrics Grid - Moderately Compact */}
+            {/* Metrics Grid - Moderately Compact & Safe */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                <Card title="Gross Merchandise Value" value={formatCurrency(metrics?.gmv)} trend={2.5} icon={<DollarSign size={18} />} />
-                <Card title="Net Ecosystem Sales" value={formatCurrency(metrics?.netSales)} trend={1.8} />
-                <Card title="Realized Net Profit" value={formatCurrency(metrics?.profit)} trend={5.2} icon={<TrendingUp size={18} />} />
-                <Card title="Inventory Distribution" value={metrics?.soldItems?.toLocaleString()} subtext="Units Sold" icon={<Package size={18} />} />
-                <Card title="Average Market Discount" value={`${metrics?.discountRate}%`} subtext="Pricing Efficiency" />
-                <Card title="Operational Return Rate" value={`${metrics?.returnRate}%`} subtext="Customer Satisfaction" />
+                <Card title="Gross Merchandise Value" value={formatCurrency(metrics?.gmv || 0)} trend={2.5} icon={<DollarSign size={18} />} />
+                <Card title="Net Ecosystem Sales" value={formatCurrency(metrics?.netSales || 0)} trend={1.8} />
+                <Card title="Realized Net Profit" value={formatCurrency(metrics?.profit || 0)} trend={5.2} icon={<TrendingUp size={18} />} />
+                <Card title="Inventory Distribution" value={(metrics?.soldItems || 0).toLocaleString()} subtext="Units Sold" icon={<Package size={18} />} />
+                <Card title="Average Market Discount" value={`${metrics?.discountRate || 0}%`} subtext="Pricing Efficiency" />
+                <Card title="Operational Return Rate" value={`${metrics?.returnRate || 0}%`} subtext="Customer Satisfaction" />
             </div>
 
-            {/* Main Interactive Grid - Precision Balanced */}
+            {/* Main Interactive Grid - Precision Balanced & Safe */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
                 <div className="lg:col-span-4 flex flex-col gap-6 lg:gap-8">
                     {/* AI Smart Reporter */}
@@ -175,22 +175,22 @@ const Dashboard = () => {
                         {aiMessage && <div className="mt-3 p-3 rounded-[16px] bg-white border border-dashed border-emerald-200 text-center label-caps text-emerald-600 animate-in text-[8px]">{aiMessage}</div>}
                     </div>
 
-                    {/* Quick SKU View - Compact High Fidelity */}
+                    {/* Quick SKU View - Compact High Fidelity Safe */}
                     <div className="card-premium rounded-[32px] shrink-0 p-6 lg:p-8">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="label-caps text-[9px]">Stock Integrity Monitor</h3>
                             <span className="text-[8px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md tracking-widest">LIVE</span>
                         </div>
                         <div className="space-y-5">
-                            {skuData?.slice(0, 4).map((item) => (
-                                <div key={item.sku} className="flex items-start justify-between group cursor-default border-b border-slate-50 pb-4 last:border-none last:pb-0 gap-4">
+                            {(skuData || []).slice(0, 4).map((item) => (
+                                <div key={item?.sku} className="flex items-start justify-between group cursor-default border-b border-slate-50 pb-4 last:border-none last:pb-0 gap-4">
                                     <div className="min-w-0 flex-1">
-                                        <p className="label-caps text-[7.5px] mb-1 group-hover:text-orange-500 transition-colors tracking-[0.4em]">{item.sku}</p>
-                                        <p className="text-sm font-black text-slate-800 tracking-tight uppercase leading-snug whitespace-normal break-words">{item.name}</p>
+                                        <p className="label-caps text-[7.5px] mb-1 group-hover:text-orange-500 transition-colors tracking-[0.4em]">{item?.sku || 'N/A'}</p>
+                                        <p className="text-sm font-black text-slate-800 tracking-tight uppercase leading-snug whitespace-normal break-words">{item?.name || 'Unknown Item'}</p>
                                     </div>
                                     <div className="flex items-center gap-4 shrink-0 pt-1">
-                                        <span className="text-xl font-black text-slate-900 tabular-nums tracking-tighter leading-none">{item.stock}</span>
-                                        <div className={`w-2 h-2 rounded-full shadow-lg ${item.status === 'Critical' ? 'bg-rose-500 shadow-rose-200' : item.status === 'Low' ? 'bg-amber-400 shadow-amber-200' : 'bg-emerald-400 shadow-emerald-200'}`} />
+                                        <span className="text-xl font-black text-slate-900 tabular-nums tracking-tighter leading-none">{item?.stock || 0}</span>
+                                        <div className={`w-2 h-2 rounded-full shadow-lg ${item?.status === 'Critical' ? 'bg-rose-500 shadow-rose-200' : item?.status === 'Low' ? 'bg-amber-400 shadow-amber-200' : 'bg-emerald-400 shadow-emerald-200'}`} />
                                     </div>
                                 </div>
                             ))}
@@ -198,7 +198,7 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Sales Velocity Chart - Hero Proportions Compact */}
+                {/* Sales Velocity Chart - Hero Proportions Compact Safe */}
                 <div className="lg:col-span-8 card-premium flex flex-col min-h-[320px] rounded-[32px] p-6 lg:p-8">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="label-caps text-[8px]">Ecosystem Sales Velocity (Weekly)</h3>
@@ -211,7 +211,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex-1 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                            <AreaChart data={chartData || []} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#FF8c42" stopOpacity={0.3} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 
 const MeetingTimer = () => {
